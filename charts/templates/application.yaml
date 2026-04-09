@@ -176,10 +176,10 @@ spec:
         domain: {{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
         catalogueAdapter:
           tier2Gateway:
-            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
         federatedCatalogue:
           tier2Gateway:
-            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
 
         {{- if eq .Values.resourcePreset "low" }}
         resources:
@@ -207,7 +207,7 @@ spec:
       values: |
         env:
           PUBLIC_AUTH_KEYCLOAK_SERVER_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
-          PUBLIC_FC_DATA_URL: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}/fc"
+          PUBLIC_FC_DATA_URL: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}/fc"
           PUBLIC_SEARCH_API_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/xfsc-advsearch-be"
           PUBLIC_CONTRACT_CONSUMPTION_API_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/contract-consumption"
         ingress:
@@ -275,7 +275,7 @@ spec:
           vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
           vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
         hostT1: participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
-        authorityHostT2: tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}
+        authorityHostT2: tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}
         global:
           ingress:
             issuer: {{ .Values.cluster.issuer }}
@@ -367,6 +367,10 @@ spec:
         podAnnotations:
           vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
           vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+        {{- if .Values.singleNode }}
+        service:
+          type: ClusterIP
+        {{- end }}
         env:
         - name: KAFKA_TIER2GW
           value: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.commonToolsNamespace }}-kafka-credentials#{{ .Values.cluster.namespace }}_tier2gw"
@@ -376,13 +380,13 @@ spec:
               name: redis-secrets
               key: redis
         cors:
-            allowOrigin: https://authority.fe.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }},https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:3000
+            allowOrigin: https://authority.fe.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }},https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }},http://localhost:4202,http://localhost:3000
         kafka:
           bootstrap-servers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
         redis:
           host: "redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local"
         hostT2: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
-        authorityUrlT1: "https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+        authorityUrlT1: "https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
         kafkaConfig:
           spring:
             kafka:
@@ -458,7 +462,7 @@ spec:
               url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
           client:
             authority:
-              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
           simpl:
             certificate:
               san: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"

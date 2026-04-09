@@ -34,6 +34,9 @@ spec:
           role: example-role                # role created in OpenBao for access
         monitoring:
           enabled: false                     # should monitoring be disabled
+        crossplane:
+          enabled: false
+        singleNode: true
     chart: consumer
   destination:
     server: 'https://kubernetes.default.svc'
