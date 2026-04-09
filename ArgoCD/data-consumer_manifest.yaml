@@ -37,7 +37,6 @@ spec:
         crossplane:
           enabled: false
         singleNode: true
-    chart: consumer
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: consumer                   # where the package will be deployed
