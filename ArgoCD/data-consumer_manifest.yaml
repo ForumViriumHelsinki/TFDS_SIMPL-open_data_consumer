@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: 'consumer-deployer'           # name of the deploying app in argocd
+  namespace: argocd                     # namespace of your argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_data_consumer.git'
+    path: charts
+    targetRevision: 3.0.1                  # version of package
+    helm:
+      values: |
+        values:
+          branch: v3.0.1                    # branch of repo with values - for released version it should be the release branch
+        project: default
+        namespaceTag: 
+          consumer: consumer              # identifier of deployment and part of fqdn for this agent
+          authority: authority           # Creates URLs pointing to the central trust: https://tls.authority.authority.ds...
+          common: common                  # identifier of deployment and part of fqdn for common components
+        domainSuffix: org-x.helsinki.tfds.io           # last part of fqdn
+        authorityDomainSuffix: ds.helsinki.tfds.io    # last part of fqdn for the governance authority cluster
+        resourcePreset: low             # set to "low" to disable requests of resources
+        argocd:
+          appname: consumer               # name of generated argocd app 
+          namespace: argocd                 # namespace of your argocd
+        cluster:
+          address: https://kubernetes.default.svc
+          namespace: consumer             # where the app will be deployed
+          commonToolsNamespace: common    # namespace where main monitoring stack is deployed
+          issuer: dev-prod                  # certificate issuer
+        secrets:
+          secretEngine: example             # secret engine name created in OpenBao
+          role: example-role                # role created in OpenBao for access
+        monitoring:
+          enabled: false                     # should monitoring be disabled
+    chart: consumer
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: consumer                   # where the package will be deployed
+
