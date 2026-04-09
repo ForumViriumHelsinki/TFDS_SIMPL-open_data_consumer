@@ -35,6 +35,13 @@ Open this file and verify or update the `values` block to match your environment
    authorityDomainSuffix: ds.helsinki.tfds.io    # The external Governance Authority's base domain
    ```
 3. **Cloud Provisioning (Crossplane):** By default, this is set to `enabled: false`. **Leave this as false** for local k3s deployments. Setting this to true will attempt to provision heavy cloud-native components (IONOS/OVH) that will crash a vanilla k3s node.
+4. **Monitoring (Elastic/Filebeat):** Configure the logging and metrics agents:
+   ```yaml
+   monitoring:
+     enabled: false                     # should monitoring be disabled
+   ```
+   *   **Impact if `false` (Recommended for Local):** Skips deploying Filebeat and Metricbeat log shippers to this namespace. This saves significant CPU and Memory on your local node. For troubleshooting, you will rely on standard `kubectl logs <pod-name>` commands instead of a centralized dashboard.
+   *   **Impact if `true`:** Deploys log shippers. **Warning:** This requires the heavy Elastic stack (`eck-operator`, Elasticsearch, Kibana) to be running and healthy in your `common` namespace. Enabling this on a constrained single-node cluster will likely lead to severe resource exhaustion and pod evictions.
 
 ---
 
