@@ -1,0 +1,43 @@
+# service port of component
+servicePort: 8080
+
+# container port of component
+containerPort: 8080
+
+# resources configuration
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "2Gi"
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"
+
+serviceAccount:
+  prefix: ""
+  name: contract-consumption-service-account
+  
+openTelemetry:
+  # disables the OpenTelemetry SDK (true on local dev)   
+  disabled: true
+  # used to identify the environment
+  environment: int
+  otlpExporter:
+    # protocol used by the OTLP exporter (http/protobuf or grpc)
+    protocol: http/protobuf
+  # context propagation type
+  propagators: tracecontext
+
+connectorAdapter:
+  service:
+    url: http://edc-connector-adapter:8080
+
+# configuration for connectivity between Contract-Consumption-Be and Validation
+validation:
+  config:
+    enabled: false
+    domain: "http://sd-validation:8080"
+
+ingress:
+  enabled: false
+      

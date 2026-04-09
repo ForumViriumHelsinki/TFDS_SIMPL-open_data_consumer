@@ -1,0 +1,18 @@
+contractmanager:
+  extension:
+    enabled: true
+  url: http://contract-consumer:8080/contract/v1
+
+tls:
+  url:
+    authenticationprovider: "http://authentication-provider:8080"
+
+javadebug:
+  enabled: false
+  port: 5006
+
+serviceAccount:
+  name: simpl-edc-service-account
+
+ingress:
+  enabled: false

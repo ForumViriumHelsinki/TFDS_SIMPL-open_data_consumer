@@ -1,0 +1,20 @@
+deployment:
+  replicas: 1
+  mode: CONSUMER
+  kafka:
+    securityProtocol: SASL_PLAINTEXT
+    sasl:
+      mechanism: PLAIN
+  urls:
+    stubs: 'http://simpl-stubs:8080'
+    edc: 'http://simpl-edc-service:29191/api'
+
+environment: default
+resources:
+  requests:
+    memory: "700Mi"
+    cpu: "300m"
+  limits:
+    memory: "700Mi"
+    cpu: "300m"
+
