@@ -1,0 +1,8 @@
+
+toc_generator.py
+pipeline.variables.sh
+.DS_Store
+.idea/
+local-dev/
+test/
+documents/
