@@ -1,6 +1,6 @@
 values:
   repo_URL: https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_data_consumer.git
-  branch: v3.0.1
+  branch: main
 
 project: ${PROJECT}
 domainSuffix: ${DOMAINSUFFIX}

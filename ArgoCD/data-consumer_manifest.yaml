@@ -8,11 +8,11 @@ spec:
   source:
     repoURL: 'https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_data_consumer.git'
     path: charts
-    targetRevision: 3.0.1                  # version of package
+    targetRevision: main                  # version of package
     helm:
       values: |
         values:
-          branch: v3.0.1                    # branch of repo with values - for released version it should be the release branch
+          branch: main                    # branch of repo with values - for released version it should be the release branch
         project: default
         namespaceTag: 
           consumer: consumer              # identifier of deployment and part of fqdn for this agent
