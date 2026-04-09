@@ -1,0 +1,11 @@
+agentType: consumer
+
+elasticsearch:
+  count: 0
+  
+kibana: 
+  count: 0
+
+logstash:
+  count_beats: 0
+  count_syslog: 0

@@ -1,0 +1,743 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Values.argocd.appname }}
+  namespace: {{ .Values.argocd.namespace }}
+spec:
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - CreateNamespace=true
+      - ServerSideApply=true
+  project: {{ .Values.project }}
+  destination:
+    server: {{ .Values.cluster.address }}
+    namespace: {{ .Values.cluster.namespace }}
+  sources:
+  - repoURL: {{ .Values.values.repo_URL }}
+    targetRevision: {{ .Values.values.branch }}
+    ref: values
+  - repoURL: {{ .Values.redis.repo_URL }}
+    targetRevision: {{ .Values.redis.targetRevision }}
+    chart: {{ .Values.redis.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.redis.valueFiles }}
+        - $values/app-values/Redis/{{ . }}
+        {{- end }}
+      values: |
+        fullnameOverride: {{ .Values.redis.nameOverride }}
+        master:
+          podAnnotations:
+            vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+            vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+          {{- if .Values.redis.resourcesPreset }}
+          resourcesPreset: {{ .Values.redis.resourcesPreset }}
+          {{- end }}
+          {{- if eq .Values.resourcePreset "low" }}
+          resources:
+            requests:
+              cpu: "0"
+              memory: "0"
+          {{- else }}
+            {{- if .Values.redis.resources }}
+          resources: {{- toYaml .Values.redis.resources | nindent 10 }}
+            {{- end }}
+          {{- end }}
+  {{- if .Values.redis_commander.enabled }}
+  - repoURL: {{ .Values.redis_commander.repo_URL }}
+    targetRevision: {{ .Values.redis_commander.targetRevision }}
+    path: {{.Values.redis_commander.path}}
+    chart: {{ .Values.redis_commander.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.redis_commander.valueFiles }}
+        - $values/app-values/Redis_commander/{{ . }}
+        {{- end }}
+      values: |
+        fullnameOverride: {{ .Values.redis_commander.nameOverride }}
+        ingress:
+          hosts:
+          - host: redis-commander.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+            paths:
+              - "/"
+          tls:
+          - secretName: redis-commander-tls
+            hosts:
+              - redis-commander.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+          annotations:
+            cert-manager.io/cluster-issuer: {{ .Values.cluster.issuer }}
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.redis_commander.resources }}
+        resources: {{- toYaml .Values.redis_commander.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  {{- end }}
+  - repoURL: {{ .Values.keycloak.repo_URL }}
+    targetRevision: {{ .Values.keycloak.targetRevision }}
+    chart: {{ .Values.keycloak.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.keycloak.valueFiles }}
+        - $values/app-values/Keycloak/{{ . }}
+        {{- end }}
+      values: |
+        fullnameOverride: {{ .Values.keycloak.nameOverride }}
+        apiUrl: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+        podAnnotations:
+          vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+          vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+        auth:
+          adminPassword: vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-keycloak#admin
+        externalDatabase:
+          host: "pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local"
+          database: {{ .Values.namespaceTag.consumer }}_keycloak
+          user: {{ .Values.namespaceTag.consumer }}_keycloak
+          password: vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-postgres-passwords#{{ .Values.cluster.namespace }}-keycloak
+        extraEnvVars:
+        - name: KC_HOSTNAME_ADMIN
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
+        - name: KC_HOSTNAME
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
+        - name: USERS_ROLES_BASE_URL
+          value: "http://users-roles.{{ .Values.cluster.namespace }}.svc.cluster.local:8080"
+        - name: AUTHENTICATION_PROVIDER_BASE_URL
+          value: "http://authentication-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080"
+        - name: KEYCLOAK_BASE_URL
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
+        - name: REALM
+          value: "participant"
+        - name: KEYCLOAK_EXTRA_ARGS
+          value: --import-realm
+
+        initContainers: 
+        - name: init-spi
+          image: curlimages/curl
+          command: ["/bin/sh", "-c"]
+          env:
+            - name: ARTIFACT
+              value: keycloak-authenticator
+            - name: URL
+              value: https://code.europa.eu/api/v4/projects/915/packages/maven/com/aruba/simpl/keycloak-authenticator/2.2.0/keycloak-authenticator-2.2.0.jar
+          args:
+            - |
+              curl -o /custom-spi/${ARTIFACT}.jar ${URL};
+          volumeMounts:
+            - name: spi-volume
+              mountPath: /custom-spi
+        - name: import-realm
+          image: nginx:latest
+          command: ["/bin/sh", "-c"]
+          env:
+            - name: REDIRECT_URIS
+              value: |-
+                [ "https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/*","https://catalogue-ui.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/*" ]
+            - name: REALM_NAME
+              value: realm
+            - name: URL
+              value: https://code.europa.eu/simpl/simpl-open/development/iaa/charts/-/raw/develop/samples/keycloak-realms/2.1.0/participant-realm-export.json?ref_type=heads
+          args:
+            - |
+              curl ${URL} | envsubst '$REDIRECT_URIS' > /config/${REALM_NAME}.json;
+          volumeMounts:
+            - name: realm-volume
+              mountPath: /config
+
+        {{- if .Values.keycloak.resourcesPreset }}
+        resourcesPreset: {{ .Values.keycloak.resourcesPreset }}
+        {{- end }}
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.keycloak.resources }}
+        resources: {{- toYaml .Values.keycloak.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}  
+  {{- if .Values.xfsc_advsearch_be.enabled }}      
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.xfsc_advsearch_be.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.xfsc_advsearch_be.targetRevision }}
+    chart: {{ .Values.xfsc_advsearch_be.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.xfsc_advsearch_be.valueFiles }}
+        - $values/app-values/xfsc-advsearch-be/{{ . }}
+        {{- end }}
+      values: |
+        domain: {{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        catalogueAdapter:
+          tier2Gateway:
+            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+        federatedCatalogue:
+          tier2Gateway:
+            url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.xfsc_advsearch_be.resources }}
+        resources: {{- toYaml .Values.xfsc_advsearch_be.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+      releaseName: {{ .Values.xfsc_advsearch_be.nameOverride }}
+
+  {{- end }}
+  {{- if .Values.simpl_catalogue_client.enabled }}    
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.simpl_catalogue_client.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.simpl_catalogue_client.targetRevision }}
+    chart: {{ .Values.simpl_catalogue_client.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.simpl_catalogue_client.valueFiles }}
+        - $values/app-values/Simpl-catalogue-client/{{ . }}
+        {{- end }}
+      values: |
+        env:
+          PUBLIC_AUTH_KEYCLOAK_SERVER_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+          PUBLIC_FC_DATA_URL: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}/fc"
+          PUBLIC_SEARCH_API_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/xfsc-advsearch-be"
+          PUBLIC_CONTRACT_CONSUMPTION_API_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/contract-consumption"
+        ingress:
+          hosts:
+            - host: catalogue-ui.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+              paths:
+              - path: /
+                pathType: ImplementationSpecific
+          tls:
+            - secretName: catalogue-ui-tld-secret
+              hosts:
+                - catalogue-ui.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+          annotations:
+            cert-manager.io/cluster-issuer: {{ .Values.cluster.issuer }}
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}            
+          {{- if .Values.simpl_catalogue_client.resources }}
+        resources: {{- toYaml .Values.simpl_catalogue_client.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.tier1_gateway.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.tier1_gateway.targetRevision }}
+    chart: {{ .Values.tier1_gateway.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.tier1_gateway.valueFiles }}
+        - $values/app-values/tier1-gateway/{{ . }}
+        {{- end }}
+      values: |
+        hostT1: participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        cors:
+          allowOrigin: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:3000
+        ingress:
+          issuer: {{ .Values.cluster.issuer }}
+        keycloakUrl: http://keycloak.{{ .Values.cluster.namespace }}.svc.cluster.local
+        usersRolesUrl: http://users-roles.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+        authenticationProviderUrl: http://authentication-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.tier1_gateway.resources }}
+        resources: {{- toYaml .Values.tier1_gateway.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}        
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.users_roles.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.users_roles.targetRevision }}
+    chart: {{ .Values.users_roles.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.users_roles.valueFiles }}
+        - $values/app-values/Users-Roles/{{ . }}
+        {{- end }}
+      values: |
+        podAnnotations:
+          vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+          vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+        hostT1: participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        authorityHostT2: tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}
+        global:
+          ingress:
+            issuer: {{ .Values.cluster.issuer }}
+        keycloak:
+          master:
+            password: vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-keycloak#admin
+        db:
+          url: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_usersroles"
+          username: {{ .Values.namespaceTag.consumer }}_usersroles
+          password: vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-postgres-passwords#{{ .Values.cluster.namespace }}-usersroles
+        env:
+        - name: KAFKA_USERSROLES
+          value: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.commonToolsNamespace }}-kafka-credentials#{{ .Values.cluster.namespace }}_usersroles"
+        microservices:
+          authenticationProviderUrl: http://authentication-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+        kafkaConfig:
+          spring:
+            kafka:
+              bootstrap-servers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+              consumer:
+                group-id: users-roles
+                properties:
+                  security.protocol: SASL_PLAINTEXT
+                  sasl.mechanism: PLAIN
+                  sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ .Values.cluster.namespace }}_usersroles" password="${KAFKA_USERSROLES}";
+              admin:
+                auto-create: true
+          simpl:
+            kafka:
+              topic:
+                prefix: iaa.{{ .Values.cluster.namespace }}.
+              inbox:
+                topic:
+                  pattern: iaa\.{{ .Values.cluster.namespace }}\..*
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}                  
+          {{- if .Values.users_roles.resources }}
+        resources: {{- toYaml .Values.users_roles.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}        
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.users_roles_fe.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.users_roles_fe.targetRevision }}
+    chart: {{ .Values.users_roles_fe.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.users_roles_fe.valueFiles }}
+        - $values/app-values/users-roles-fe/{{ . }}
+        {{- end }}
+      values: |
+        hostFe: participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        ingress:
+          issuer: {{ .Values.cluster.issuer }}
+        cors:
+          allowOrigin: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:4203,http://localhost:3000
+        env:
+        - name: API_URL
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+        - name: KEYCLOAK_URL
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
+        - name: KEYCLOAK_REALM
+          value: "participant"
+        - name: KEYCLOAK_CLIENT_ID
+          value: "frontend-cli"
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}  
+          {{- if .Values.users_roles_fe.resources }}
+        resources: {{- toYaml .Values.users_roles_fe.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.tier2_gateway.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.tier2_gateway.targetRevision }}
+    chart: {{ .Values.tier2_gateway.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.tier2_gateway.valueFiles }}
+        - $values/app-values/tier2-gateway/{{ . }}
+        {{- end }}
+      values: |
+        podAnnotations:
+          vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+          vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+        env:
+        - name: KAFKA_TIER2GW
+          value: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.commonToolsNamespace }}-kafka-credentials#{{ .Values.cluster.namespace }}_tier2gw"
+        - name: SPRING_DATA_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: redis
+        cors:
+            allowOrigin: https://authority.fe.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }},https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:3000
+        kafka:
+          bootstrap-servers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+        redis:
+          host: "redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local"
+        hostT2: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+        authorityUrlT1: "https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+        kafkaConfig:
+          spring:
+            kafka:
+              bootstrap-servers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+              consumer:
+                properties:
+                  security.protocol: SASL_PLAINTEXT
+                  sasl.mechanism: PLAIN
+                  sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ .Values.cluster.namespace }}_tier2gw" password="${KAFKA_TIER2GW}";
+              admin:
+                auto-create: true
+          simpl:
+            kafka:
+              topic:
+                prefix: iaa.{{ .Values.cluster.namespace }}.
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}                            
+          {{- if .Values.tier2_gateway.resources }}
+        resources: {{- toYaml .Values.tier2_gateway.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.tier2_proxy.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.tier2_proxy.targetRevision }}
+    chart: {{ .Values.tier2_proxy.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.tier2_proxy.valueFiles }}
+        - $values/app-values/tier2-proxy/{{ . }}
+        {{- end }}
+      values: |
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.tier2_proxy.resources }}
+        resources: {{- toYaml .Values.tier2_proxy.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}  
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.auth_provider.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.auth_provider.targetRevision }}
+    chart: {{ .Values.auth_provider.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.auth_provider.valueFiles }}
+        - $values/app-values/auth-provider/{{ . }}
+        {{- end }}
+      values: |
+        podAnnotations:
+          vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+          vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
+        appConfig:
+          management:
+            otlp:
+              tracing:
+                endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
+          spring:
+            datasource:
+              url: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_authenticationprovider"
+              username: {{ .Values.namespaceTag.consumer }}_authenticationprovider
+            data:
+              redis:
+                host: "redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local"
+          microservice:
+            identity-provider:
+              url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+          client:
+            authority:
+              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+          simpl:
+            certificate:
+              san: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+
+        env:
+        - name: KAFKA_AUTHPROVIDER
+          value: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.commonToolsNamespace }}-kafka-credentials#{{ .Values.cluster.namespace }}_authprovider"
+        - name: SPRING_DATA_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: redis
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-postgres-passwords#{{ .Values.cluster.namespace }}-authenticationprovider"
+        kafkaConfig:
+          spring:
+            kafka:
+              bootstrap-servers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+              producer:
+                properties:
+                  security.protocol: SASL_PLAINTEXT
+                  sasl.mechanism: PLAIN
+                  sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ .Values.cluster.namespace }}_authprovider" password="${KAFKA_AUTHPROVIDER}";
+              admin:
+                auto-create: true
+          simpl:
+            kafka:
+              topic:
+                prefix: iaa.{{ .Values.cluster.namespace }}.
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}                
+          {{- if .Values.auth_provider.resources }}
+        resources: {{- toYaml .Values.auth_provider.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.auth_provider_fe.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.auth_provider_fe.targetRevision }}
+    chart: {{ .Values.auth_provider_fe.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.auth_provider_fe.valueFiles }}
+        - $values/app-values/auth-provider-fe/{{ . }}
+        {{- end }}
+      values: |
+        hostFe: participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        ingress:
+          issuer: {{ .Values.cluster.issuer }}
+        cors:
+          allowOrigin: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:4203,http://localhost:3000
+        env:
+        - name: API_URL
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
+        - name: KEYCLOAK_URL
+          value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
+        - name: KEYCLOAK_REALM
+          value: "participant" 
+        - name: KEYCLOAK_CLIENT_ID
+          value: "frontend-cli"
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.auth_provider_fe.resources }}
+        resources: {{- toYaml .Values.auth_provider_fe.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  {{- if .Values.simpl_edc.enabled }}      
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.simpl_edc.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.simpl_edc.targetRevision }}
+    chart: {{ .Values.simpl_edc.chart_name }}
+    helm:
+      releaseName: {{ .Values.simpl_edc.nameOverride }}
+      valueFiles:
+        {{- range .Values.simpl_edc.valueFiles }}
+        - $values/app-values/simpl-edc/{{ . }}
+        {{- end }}
+      values: |
+        deployment:
+          host: {{ .Values.simpl_edc.nameOverride }}-service
+          callbackAddress: "https://tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/edc"
+        env:
+          datasourceurl: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_edc"
+          edcParticipantId: {{ .Values.cluster.namespace }}
+        postgresql:
+          username: {{ .Values.cluster.namespace }}_edc
+        hashicorp:
+          role: {{ .Values.secrets.role }}
+          service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+        secretEngine: {{ .Values.secrets.secretEngine }}
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+          {{- if .Values.simpl_edc.resources }}
+        resources: {{- toYaml .Values.simpl_edc.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}  
+  {{- end }} 
+  {{- if .Values.edc_connector_adapter.enabled }}      
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.edc_connector_adapter.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.edc_connector_adapter.targetRevision }}
+    chart: {{ .Values.edc_connector_adapter.chart_name }}
+    helm:
+      releaseName: {{ .Values.edc_connector_adapter.nameOverride }}
+      valueFiles:
+        {{- range .Values.edc_connector_adapter.valueFiles }}
+        - $values/app-values/edc-connector-adapter/{{ . }}
+        {{- end }}
+      values: |
+        ingress:
+          clusterIssuer: {{ .Values.cluster.issuer }}
+        domain: {{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        openapiConfig:
+          servers: https://edc-connector-adapter.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        openTelemetry:
+          otlpExporter:
+            endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
+        edcConnector:
+          tier2BaseUrl: https://tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/edc
+          participantId: {{ .Values.cluster.namespace }}
+        kafka:
+          bootstrapServers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092 
+          topics:
+            transferProcess: contract_consumption.transfer-{{ .Values.cluster.namespace }}
+        vault:
+          secretEngine: "{{ .Values.secrets.secretEngine }}"
+          secretPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-edc-connector-adapter"
+          role: "{{ .Values.secrets.role }}"
+          service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}      
+          {{- if .Values.edc_connector_adapter.resources }}
+        resources: {{- toYaml .Values.edc_connector_adapter.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+  {{- end }}
+  {{- if .Values.monitoring.enabled }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.monitoring.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.monitoring.targetRevision }}
+    chart: {{ .Values.monitoring.chart_name }}
+    helm:
+      releaseName: {{ .Values.monitoring.fullnameOverride }}
+      valueFiles:
+        {{- range .Values.monitoring.valueFiles }}
+        - $values/app-values/monitoring/{{ . }}
+        {{- end }}
+      values: |
+        clusterIssuer: {{ .Values.cluster.issuer }}
+        domainSuffix: {{ .Values.domainSuffix }}
+        namespaceTag: {{ .Values.namespaceTag.consumer }}
+        mainNamespace: {{ .Values.cluster.commonToolsNamespace }}
+        filebeat:
+          {{- if eq .Values.resourcePreset "low" }}
+          resources:
+            requests:
+              cpu: "0"
+              memory: "0"
+          {{- else }}
+            {{- if .Values.monitoring.resources.filebeat }}
+          resources: {{- toYaml .Values.monitoring.resources.filebeat | nindent 12 }}
+            {{- end }}
+          {{- end }}
+  {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.contract.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.contract.targetRevision }}
+    chart: {{ .Values.contract.chart_name }}
+    helm:
+      releaseName: {{ .Values.contract.nameOverride }}
+      valueFiles:
+        {{- range .Values.contract.valueFiles }}
+        - $values/app-values/contract/{{ . }}
+        {{- end }}
+      values: |
+        deployment:
+          db:
+            url: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_contract"
+            user: {{ .Values.cluster.namespace }}_contract
+          kafka:
+            bootstrapServer: http://kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+            clientUser: {{ .Values.cluster.namespace }}_contract
+            topics:
+              signContractRequest: sign-contract-req-{{ .Values.cluster.namespace }}
+              signContractRequestDLT: sign-contract-req-dlt-{{ .Values.cluster.namespace }}
+              signContractResponse: sign-contract-resp-{{ .Values.cluster.namespace }}
+              signContractResponseDLT: sign-contract-resp-dlt-{{ .Values.cluster.namespace }}
+              statusUpdate: status-update-{{ .Values.cluster.namespace }}
+              statusUpdateDLT: status-update-dlt-{{ .Values.cluster.namespace }}
+          otel:
+            endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
+          vault:
+            hashicorp:
+              service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+              secretEngine: {{ .Values.secrets.secretEngine }}
+              role: {{ .Values.secrets.role }}
+              secretConfigPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-contract"
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"              
+        {{- else }}
+          {{- if .Values.contract.resources }}
+        resources: {{- toYaml .Values.contract.resources | nindent 10 }}
+          {{- end }} 
+        {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.stubs.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.stubs.targetRevision }}
+    chart: {{ .Values.stubs.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.stubs.valueFiles }}
+        - $values/app-values/stubs/{{ . }}
+        {{- end }}
+      values: |
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"
+        {{- else }}
+          {{- if .Values.stubs.resources }}
+        resources: {{- toYaml .Values.stubs.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}         
+  {{- if .Values.contract_consumption_be.enabled }}      
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.contract_consumption_be.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.contract_consumption_be.targetRevision }}
+    chart: {{ .Values.contract_consumption_be.chart_name }}
+    helm:
+      valueFiles:
+        {{- range .Values.contract_consumption_be.valueFiles }}
+        - $values/app-values/contract-consumption-be/{{ . }}
+        {{- end }}
+      values: |
+        domain: {{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        connectorAdapter:
+          tier1Gateway:
+            url: https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/edc-connector-adapter
+        {{- if eq .Values.resourcePreset "low" }}
+        resources:
+          requests:
+            cpu: "0"
+            memory: "0"              
+        {{- else }}
+          {{- if .Values.contract_consumption_be.resources }}
+        resources: {{- toYaml .Values.contract_consumption_be.resources | nindent 10 }}
+          {{- end }}
+        {{- end }}
+
+        openapiConfig:
+          servers: https://creation-wizard-api.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}
+        openTelemetry:
+          otlpExporter:
+            endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
+        vault:
+          secretEngine: "{{ .Values.secrets.secretEngine }}"
+          secretPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-contract-consumption-be"
+          role: "{{ .Values.secrets.role }}"
+          service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
+        kafka:
+          bootstrapServers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
+      releaseName: {{ .Values.contract_consumption_be.nameOverride }}
+  {{- end }}    

@@ -1,0 +1,40 @@
+appConfig:
+  external-routes:
+    spring-route-definitions:
+      - id: edc
+        uri: http://simpl-edc-service:29194
+        predicates:
+          - Path=/edc/**
+        filters:
+          - StripPrefix=1
+      - id: edc-connector
+        uri: http://edc-connector-adapter:8080
+        predicates:
+          - Path=/edc-connector-adapter/**
+        filters:
+          - StripPrefix=1
+
+    public-urls:
+      - method: GET
+        path: "/actuator/**"
+      - method: GET
+        path: "/edc/**"
+      - method: POST
+        path: "/edc/**"
+      - method: GET
+        path: "/edc-connector-adapter/**"
+      - method: POST
+        path: "/edc-connector-adapter/**"
+    abac:
+      - method: POST
+        path: "/edc/**"
+        disable-ephemeral-proof-check: true
+      - method: GET
+        path: "/edc/**"
+        disable-ephemeral-proof-check: true
+      - method: POST
+        path: "/edc-connector-adapter/**"
+        disable-ephemeral-proof-check: true
+      - method: GET
+        path: "/edc-connector-adapter/**"
+        disable-ephemeral-proof-check: true

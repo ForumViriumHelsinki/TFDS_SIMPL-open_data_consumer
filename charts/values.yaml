@@ -1,0 +1,274 @@
+values:
+  repo_URL: https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_data_consumer.git
+  branch: v3.0.1
+
+project: ${PROJECT}
+domainSuffix: ${DOMAINSUFFIX}
+namespaceTag:
+  consumer: ${NAMESPACETAG}
+  authority: ${AUTHNAMESPACETAG}
+  common: ${COMMONSPACETAG}
+
+resourcePreset: default
+# resourcePreset: low
+
+argocd:
+  appname: ${NAMESPACE}
+  namespace: ${ARGOCDNAMESPACE}
+
+cluster:
+  address: https://kubernetes.default.svc
+  namespace: ${NAMESPACE}
+  commonToolsNamespace: ${COMMONNAMESPACE}
+  issuer: ${CLUSTERISSUER}
+
+secrets:
+  secretEngine: ${SECRETENGINE}
+  role: ${SECRETROLE}
+
+redis:
+  repo_URL: 'https://charts.bitnami.com/bitnami'
+  targetRevision: 19.6.0
+  chart_name: redis
+  nameOverride: redis
+  resourcesPreset: "none"
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+  valueFiles:
+    - values.yaml
+
+redis_commander:
+  enabled: false
+  repo_URL: 'https://github.com/joeferner/redis-commander.git'
+  targetRevision: master
+  nameOverride: redis-commander
+  path: 'k8s/helm-chart/redis-commander'
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  valueFiles:
+    - values.yaml
+
+keycloak:
+  repo_URL: https://charts.bitnami.com/bitnami
+  chart_name: keycloak
+  targetRevision: 22.2.5
+  nameOverride: keycloak
+  resourcesPreset: "none"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  valueFiles:
+    - values.yaml
+
+tier1_gateway:
+  projectID: "772"
+  targetRevision: 2.8.0
+  chart_name: tier1-gateway
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+xfsc_advsearch_be:
+  enabled: true
+  projectID: "891"
+  targetRevision: 1.18.0
+  chart_name: xfsc-advsearch
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+  nameOverride: xfsc-advsearch-be
+
+users_roles:
+  projectID: "771"
+  targetRevision: 2.8.0
+  chart_name: users-roles
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+users_roles_fe:
+  projectID: "1310"
+  targetRevision: 2.8.3
+  chart_name: fe-users-and-roles
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+tier2_gateway:
+  projectID: "860"
+  targetRevision: 2.8.0
+  chart_name: tier2-gateway
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+    - values-routes.yaml
+
+tier2_proxy:
+  projectID: "1112"
+  targetRevision: 1.2.1
+  chart_name: tier2-proxy
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+
+simpl_edc:
+  enabled: true
+  projectID: "920"
+  targetRevision: 1.0.21
+  chart_name: edc
+  nameOverride: simpl-edc
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+    - values-consumer.yaml
+
+edc_connector_adapter:
+  enabled:  true
+  projectID: "1091"
+  targetRevision: 1.10.1
+  chart_name: edc-connector-adapter
+  nameOverride: edc-connector-adapter
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+simpl_catalogue_client:
+  enabled: true
+  projectID: "937"
+  targetRevision: 2.2.0
+  chart_name: catalogue-ui
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+auth_provider:
+  projectID: "939"
+  targetRevision: 2.8.0
+  chart_name: authentication-provider
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  valueFiles:
+    - values.yaml
+
+auth_provider_fe:
+  projectID: "1308"
+  targetRevision: 2.8.3
+  chart_name: fe-authentication-provider
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+monitoring:
+  enabled: true
+  projectID: "828"
+  targetRevision: 0.3.1
+  chart_name: eck-monitoring
+  fullnameOverride: elastic
+  resources:
+    filebeat:
+      requests:
+        memory: "100Mi"
+        cpu: "100m"
+  valueFiles:
+    - values.yaml
+
+contract:
+  projectID: "872"
+  targetRevision: 2.5.0
+  chart_name: simpl-contract
+  resources:
+    requests:
+      memory: "250Mi"
+      cpu: "150m"
+    limits:
+      memory: "700Mi"
+      cpu: "300m"
+  valueFiles:
+    - values.yaml
+  nameOverride: contract-consumer
+
+stubs:
+  projectID: "930"
+  targetRevision: 2.0.2
+  chart_name: simpl-stubs
+  valueFiles:
+    - values.yaml
+
+contract_consumption_be:
+  enabled: true
+  projectID: "968"
+  targetRevision: 1.15.0
+  chart_name: contract-consumption-be
+  nameOverride: contract-consumption-be
+  valueFiles:
+    - values.yaml

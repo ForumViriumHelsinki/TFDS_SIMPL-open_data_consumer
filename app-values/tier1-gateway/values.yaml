@@ -1,0 +1,62 @@
+profile: participant
+
+# Spring Cloud Gateway Routes Participant
+appConfig:
+  external-routes:
+    spring-route-definitions:
+      - id: contract-consumption-be
+        uri: http://contract-consumption-be:8080
+        predicates:
+          - Path=/contract-consumption/**
+        filters:
+          - StripPrefix=1
+      - id: sdtooling-wizard-be
+        uri: http://sd-creation-wizard-api:8080
+        predicates:
+          - Path=/sdtooling-api/**
+        filters:
+          - StripPrefix=1    
+      - id: xfsc-advsearch-be
+        uri: http://xfsc-advsearch-be:8080
+        predicates:
+          - Path=/xfsc-advsearch-be/**
+        filters:
+          - StripPrefix=1
+      - id: edc-connector
+        uri: http://edc-connector-adapter:8080
+        predicates:
+          - Path=/edc-connector-adapter/**
+        filters:
+          - StripPrefix=1
+      - id: edc-management
+        uri: http://simpl-edc-service:29193
+        predicates:
+          - Path=/edc/**
+        filters:
+          - StripPrefix=1
+    public-urls:
+      - method: "GET"
+        path: "/actuator/health/**"
+    rbac:
+      - path: "/edc-connector-adapter/api/*/registration/register"
+        method: GET
+        roles:
+          - SD_PUBLISHER
+      - path: "/edc-connector-adapter/api/*/configuration/participant"
+        method: POST
+        roles:
+          - SD_PUBLISHER
+
+  springdoc:
+    swagger-ui:
+      urls:
+        - url: /userApi/openapi/usersroles-v1.yaml
+          name: Users & Roles Service V1
+        - url: /authApi/openapi/authenticationprovider-v1.yaml
+          name: Authentication Provider Service V1
+        - url: /openapi/tier1gateway-v1.yaml
+          name: Application Info V1
+
+  keycloak:
+    app:
+      realm: participant

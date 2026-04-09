@@ -1,0 +1,35 @@
+auth:
+  adminUser: "admin" 
+
+postgresql:
+  enabled: false
+
+externalDatabase:
+  annotations: {}
+  existingSecret: ""
+  existingSecretDatabaseKey: ""
+  existingSecretHostKey: ""
+  existingSecretPasswordKey: ""
+  existingSecretPortKey: ""
+  existingSecretUserKey: ""
+  port: 5432
+
+extraVolumes:
+  - name: spi-volume
+    emptyDir: {}
+  - name: realm-volume
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: spi-volume
+    mountPath: /opt/bitnami/keycloak/providers/keycloak-authenticator.jar
+    subPath: keycloak-authenticator.jar
+  - name: realm-volume
+    mountPath: /opt/bitnami/keycloak/data/import/realm.json
+    subPath: realm.json
+
+image:
+  repository: bitnamilegacy/keycloak
+security:
+  allowInsecureImages: true
+  

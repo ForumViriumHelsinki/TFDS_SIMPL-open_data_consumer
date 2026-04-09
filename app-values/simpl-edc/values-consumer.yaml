@@ -1,0 +1,18 @@
+deployment:
+  label: consumer
+
+service:
+  apiPort: 29191
+  controlPort: 29192
+  managementPort: 29193
+  protocolPort: 29194
+  publicPort: 29291
+
+ingress:
+  enabled: false
+  # tlsSecretName: consumer-simpl-backend-tls
+
+# it would be better to move those to vault in the future or use sops encryption
+env:
+  edcParticipantId: "consumer"
+  edcIdsId: "urn:connector:consumer"

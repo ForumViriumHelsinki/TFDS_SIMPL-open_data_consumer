@@ -1,0 +1,21 @@
+global:
+  profile: participant
+
+autoscaling:
+  enabled: false
+
+keycloak:
+  master:
+    user: "admin"
+    realm: participant
+  clientToRealmRoleMigration:
+    enabled: true # set to true to import realm roles from client roles
+    clientIds: "['frontend-cli']"
+
+databaseSeeding:
+  roleIdentityAttributesMapping:
+    enabled: true # if you want start with an empty identity attributes table, turn off 
+    # uncomment below if you want to specify your custom attributes, your json file path must start with 'file:'
+    # if enabled=true and filePath is commented or empty the table will be initialized with the default seeding file.
+    # You can find the default seeding file roleAttributes.default.json in samples/db-seeding/user-roles/0.8.x/
+    filePath: #file:/app/config/roleAttributes.json 

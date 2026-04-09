@@ -1,0 +1,58 @@
+image:
+  repository: "code.europa.eu:4567/simpl/simpl-open/development/data1/xfsc-advsearch-be"
+
+#Service port of component SD-Tooling-Api-Validation
+xsfcAdvsearchServicePort: 8080
+
+#Container port of component SD-Tooling-Api-Validation
+xsfcAdvsearchContainerPort: 8080
+
+
+#specify 'dev' for dev environment or 'dev-int' for integration environment
+vaultEnvIdentifier: dev-int
+
+#Domain associated with Dev Cluster (don't modify it)
+domain: int.simpl-europe.eu
+
+#ID of persistentVolumeClaims associated with NFS Storage
+schemaVolumeClaim: nfs-storage-pvc-sd
+#Mount path used for schema storage
+schemaPvcMountPath: /data
+
+ingress:
+  enabled: false
+
+# authentication provider
+authenticationProvider:
+  service: 
+    url: http://authentication-provider:8080
+
+# federated catalog application (fc-service)
+federatedCatalogue:
+  tier2Gateway:
+    # URI to the tier2 tls gateway of the federated catalog application
+    # tier2 tls gateway path configured as route rule to the federated catalog application
+    pathPrefix: /fc
+
+# catalog adapter application (catalogue-adapter-service)
+catalogueAdapter:
+  tier2Gateway:
+    # tier2 tls gateway path configured as route rule to the catalog adapter application
+    pathPrefix: /adapter
+
+# participant provider
+participant:
+  onboarding:
+    # onboarding credential certificate password
+    credentialPassword: authority
+  
+web:
+  mvc:
+    cors:
+      # optional allowed origins for cross calls (separated by comma or * to allow all origins)
+      # if empty no cross calls are allowed
+      allowedOrigins: ""  
+
+env:
+  PUBLIC_AGENT_TYPE="consumer"
+  

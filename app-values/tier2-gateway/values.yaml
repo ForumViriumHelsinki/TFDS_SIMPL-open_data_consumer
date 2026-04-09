@@ -1,0 +1,10 @@
+profile: participant
+
+redis:
+  port: "6379"
+  username: "default"
+
+microservices:
+  usersRolesUrl: http://users-roles:8080
+  keycloakUrl: http://keycloak
+  authenticationProviderUrl: http://authentication-provider:8080
