@@ -1,16 +1,16 @@
 # TFDS SIMPL-open Data Consumer Agent
 
-This repository contains the deployment manifests and configurations for the **SIMPL-Open Data Consumer** agent, adapted and optimized for local, single-node Kubernetes (k3s) environments.
+This repository contains the deployment manifests and configurations for the **SIMPL-Open Data Consumer** agent, adapted for both distributed environments and local, single-node Kubernetes (k3s) deployments.
 
 ## 🚀 Quick Start Deployment Guide
 
-This guide is designed for users who want to quickly deploy the Data Consumer agent using **ArgoCD**. It assumes you are deploying to a local, single-node k3s cluster.
+This guide is designed for users who want to quickly deploy the Data Consumer agent using **ArgoCD**. While these instructions are optimized for a local, single-node k3s cluster, the agent is fully capable of distributed deployments.
 
 ### Prerequisites
 
 Before deploying the Data Consumer, ensure your environment meets the following requirements:
-1. **Running k3s Cluster:** A single-node cluster with `MetalLB` and an `nginx` Ingress Controller.
-2. **Common Components Deployed:** The core SIMPL infrastructure (Kafka, PostgreSQL, Elastic, OpenBao) must already be running in the `common` namespace.
+1. **Running Kubernetes Cluster:** A standard multi-node cluster or a single-node setup (like k3s with MetalLB) with an `nginx` Ingress Controller.
+2. **Common Components Deployed:** The core SIMPL infrastructure (Kafka, PostgreSQL, Elastic, OpenBao) must already be running in the `common` namespace. You can find the deployment guide for this layer in the [Common Components Repository](https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_common_components).
 3. **DNS Routing:** A wildcard DNS record (e.g., `*.consumer.yourdomain.com`) pointing to your MetalLB public IP.
 4. **Governance Authority:** You need the domain name of the external Governance Authority cluster you will federate with (e.g., `ds.helsinki.tfds.io`).
 
@@ -34,8 +34,9 @@ Open this file and verify or update the `values` block to match your environment
    domainSuffix: org-x.helsinki.tfds.io          # Your local cluster's base domain
    authorityDomainSuffix: ds.helsinki.tfds.io    # The external Governance Authority's base domain
    ```
-3. **Cloud Provisioning (Crossplane):** By default, this is set to `enabled: false`. **Leave this as false** for local k3s deployments. Setting this to true will attempt to provision heavy cloud-native components (IONOS/OVH) that will crash a vanilla k3s node.
-4. **Monitoring (Elastic/Filebeat):** Configure the logging and metrics agents:
+3. **Single-Node Mode (Optional):** If deploying to a single-node environment with a single IP, ensure `singleNode: true` is set in the manifest. For standard distributed clusters, remove this or set it to `false`.
+4. **Cloud Provisioning (Crossplane):**  By default, this is set to `enabled: false`. **Leave this as false** for local k3s deployments. Setting this to true will attempt to provision heavy cloud-native components (IONOS/OVH) that will crash a vanilla k3s node.
+5. **Monitoring (Elastic/Filebeat):** Configure the logging and metrics agents:
    ```yaml
    monitoring:
      enabled: false                     # should monitoring be disabled
