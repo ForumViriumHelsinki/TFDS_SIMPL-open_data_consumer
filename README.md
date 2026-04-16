@@ -1,5 +1,16 @@
 # TFDS SIMPL-open Data Consumer Agent
 
+> **Notice: TFDS Project Fork**
+> This repository is a GitOps-optimized fork maintained by the TFDS Project. 
+> 
+> **Modifications in this repository:**
+> - Substituted the upstream `authentication-provider` dependency with a TFDS-maintained GitOps fork to eliminate declarative synchronization drift in ArgoCD caused by dynamically generated Job names.
+> - Overridden `tier2_gateway` service types to `ClusterIP` and added `singleNode` SSL passthrough routing to accommodate local multi-agent deployments on single-IP k3s clusters.
+> - Decoupled the Governance Authority `domainSuffix` variable from the agent's base domain to enable true cross-cluster federation.
+> - Disabled the default `crossplane` provisioning engine to prevent severe resource exhaustion on local development clusters.
+>
+> *The core SIMPL applications are unmodified and dynamically pulled from official registries under EUPL 1.2.*
+
 This repository contains the deployment manifests and configurations for the **SIMPL-Open Data Consumer** agent, adapted for both distributed environments and local, single-node Kubernetes (k3s) deployments.
 
 ## 🚀 Quick Start Deployment Guide
