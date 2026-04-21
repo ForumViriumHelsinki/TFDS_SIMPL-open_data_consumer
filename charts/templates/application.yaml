@@ -248,6 +248,9 @@ spec:
           allowOrigin: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }},http://localhost:4202,http://localhost:3000
         ingress:
           issuer: {{ .Values.cluster.issuer }}
+          annotations:
+            nginx.ingress.kubernetes.io/configuration-snippet: |
+              more_set_input_headers 'Origin: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}';
         keycloakUrl: http://keycloak.{{ .Values.cluster.namespace }}.svc.cluster.local
         usersRolesUrl: http://users-roles.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
         authenticationProviderUrl: http://authentication-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
