@@ -671,14 +671,10 @@ spec:
               signContractResponseDLT: sign-contract-resp-dlt-{{ .Values.cluster.namespace }}
               statusUpdate: status-update-{{ .Values.cluster.namespace }}
               statusUpdateDLT: status-update-dlt-{{ .Values.cluster.namespace }}
+          {{- if .Values.monitoring.enabled }}
           otel:
             endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
-          env:
-            {{- if not .Values.monitoring.enabled }}
-            OTEL_TRACES_EXPORTER: "none"
-            OTEL_METRICS_EXPORTER: "none"
-            OTEL_LOGS_EXPORTER: "none"
-            {{- end }}
+          {{- end }}
           vault:
             hashicorp:
               service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
