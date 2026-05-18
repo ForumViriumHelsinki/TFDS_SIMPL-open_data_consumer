@@ -116,7 +116,7 @@ spec:
         - name: KEYCLOAK_EXTRA_ARGS
           value: --import-realm
 
-        initContainers: 
+        initContainers:
         - name: init-spi
           image: curlimages/curl
           command: ["/bin/sh", "-c"]
@@ -161,8 +161,8 @@ spec:
           {{- if .Values.keycloak.resources }}
         resources: {{- toYaml .Values.keycloak.resources | nindent 10 }}
           {{- end }}
-        {{- end }}  
-  {{- if .Values.xfsc_advsearch_be.enabled }}      
+        {{- end }}
+  {{- if .Values.xfsc_advsearch_be.enabled }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.xfsc_advsearch_be.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.xfsc_advsearch_be.targetRevision }}
@@ -194,7 +194,7 @@ spec:
       releaseName: {{ .Values.xfsc_advsearch_be.nameOverride }}
 
   {{- end }}
-  {{- if .Values.simpl_catalogue_client.enabled }}    
+  {{- if .Values.simpl_catalogue_client.enabled }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.simpl_catalogue_client.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.simpl_catalogue_client.targetRevision }}
@@ -227,7 +227,7 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}            
+        {{- else }}
           {{- if .Values.simpl_catalogue_client.resources }}
         resources: {{- toYaml .Values.simpl_catalogue_client.resources | nindent 10 }}
           {{- end }}
@@ -263,7 +263,7 @@ spec:
           {{- if .Values.tier1_gateway.resources }}
         resources: {{- toYaml .Values.tier1_gateway.resources | nindent 10 }}
           {{- end }}
-        {{- end }}        
+        {{- end }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.users_roles.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.users_roles.targetRevision }}
@@ -318,11 +318,11 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}                  
+        {{- else }}
           {{- if .Values.users_roles.resources }}
         resources: {{- toYaml .Values.users_roles.resources | nindent 10 }}
           {{- end }}
-        {{- end }}        
+        {{- end }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.users_roles_fe.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.users_roles_fe.targetRevision }}
@@ -352,7 +352,7 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}  
+        {{- else }}
           {{- if .Values.users_roles_fe.resources }}
         resources: {{- toYaml .Values.users_roles_fe.resources | nindent 10 }}
           {{- end }}
@@ -410,7 +410,7 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}                            
+        {{- else }}
           {{- if .Values.tier2_gateway.resources }}
         resources: {{- toYaml .Values.tier2_gateway.resources | nindent 10 }}
           {{- end }}
@@ -434,18 +434,17 @@ spec:
           {{- if .Values.tier2_proxy.resources }}
         resources: {{- toYaml .Values.tier2_proxy.resources | nindent 10 }}
           {{- end }}
-        {{- end }}  
-  - repoURL: "https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_authentication_provider.git"
-    path: 'charts'
-    targetRevision: main
+        {{- end }}
+  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.auth_provider.projectID }}/packages/helm/stable"
+    path: ''
+    targetRevision: {{ .Values.auth_provider.targetRevision }}
+    chart: {{ .Values.auth_provider.chart_name }}
     helm:
       valueFiles:
         {{- range .Values.auth_provider.valueFiles }}
         - $values/app-values/auth-provider/{{ . }}
         {{- end }}
       values: |
-        image:
-          tag: "{{ .Values.auth_provider.targetRevision }}"
         podAnnotations:
           vault.security.banzaicloud.io/vault-addr: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
           vault.security.banzaicloud.io/vault-role: {{ .Values.secrets.role }}
@@ -466,7 +465,7 @@ spec:
               url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
           client:
             authority:
-              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
+              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
           simpl:
             certificate:
               san: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
@@ -501,7 +500,7 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}                
+        {{- else }}
           {{- if .Values.auth_provider.resources }}
         resources: {{- toYaml .Values.auth_provider.resources | nindent 10 }}
           {{- end }}
@@ -527,7 +526,7 @@ spec:
         - name: KEYCLOAK_URL
           value: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth"
         - name: KEYCLOAK_REALM
-          value: "participant" 
+          value: "participant"
         - name: KEYCLOAK_CLIENT_ID
           value: "frontend-cli"
         {{- if eq .Values.resourcePreset "low" }}
@@ -540,7 +539,7 @@ spec:
         resources: {{- toYaml .Values.auth_provider_fe.resources | nindent 10 }}
           {{- end }}
         {{- end }}
-  {{- if .Values.simpl_edc.enabled }}      
+  {{- if .Values.simpl_edc.enabled }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.simpl_edc.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.simpl_edc.targetRevision }}
@@ -572,9 +571,9 @@ spec:
           {{- if .Values.simpl_edc.resources }}
         resources: {{- toYaml .Values.simpl_edc.resources | nindent 10 }}
           {{- end }}
-        {{- end }}  
-  {{- end }} 
-  {{- if .Values.edc_connector_adapter.enabled }}      
+        {{- end }}
+  {{- end }}
+  {{- if .Values.edc_connector_adapter.enabled }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.edc_connector_adapter.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.edc_connector_adapter.targetRevision }}
@@ -598,7 +597,7 @@ spec:
           tier2BaseUrl: https://tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/edc
           participantId: {{ .Values.cluster.namespace }}
         kafka:
-          bootstrapServers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092 
+          bootstrapServers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
           topics:
             transferProcess: contract_consumption.transfer-{{ .Values.cluster.namespace }}
         vault:
@@ -612,7 +611,7 @@ spec:
           requests:
             cpu: "0"
             memory: "0"
-        {{- else }}      
+        {{- else }}
           {{- if .Values.edc_connector_adapter.resources }}
         resources: {{- toYaml .Values.edc_connector_adapter.resources | nindent 10 }}
           {{- end }}
@@ -683,11 +682,11 @@ spec:
         resources:
           requests:
             cpu: "0"
-            memory: "0"              
+            memory: "0"
         {{- else }}
           {{- if .Values.contract.resources }}
         resources: {{- toYaml .Values.contract.resources | nindent 10 }}
-          {{- end }} 
+          {{- end }}
         {{- end }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.stubs.projectID }}/packages/helm/stable"
     path: ''
@@ -708,8 +707,8 @@ spec:
           {{- if .Values.stubs.resources }}
         resources: {{- toYaml .Values.stubs.resources | nindent 10 }}
           {{- end }}
-        {{- end }}         
-  {{- if .Values.contract_consumption_be.enabled }}      
+        {{- end }}
+  {{- if .Values.contract_consumption_be.enabled }}
   - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.contract_consumption_be.projectID }}/packages/helm/stable"
     path: ''
     targetRevision: {{ .Values.contract_consumption_be.targetRevision }}
@@ -728,7 +727,7 @@ spec:
         resources:
           requests:
             cpu: "0"
-            memory: "0"              
+            memory: "0"
         {{- else }}
           {{- if .Values.contract_consumption_be.resources }}
         resources: {{- toYaml .Values.contract_consumption_be.resources | nindent 10 }}
@@ -748,4 +747,4 @@ spec:
         kafka:
           bootstrapServers: kafka.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:9092
       releaseName: {{ .Values.contract_consumption_be.nameOverride }}
-  {{- end }}    
+  {{- end }}
