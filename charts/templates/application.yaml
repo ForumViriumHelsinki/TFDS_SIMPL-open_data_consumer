@@ -465,7 +465,7 @@ spec:
               url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
           client:
             authority:
-              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.domainSuffix }}"
+              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
           simpl:
             certificate:
               san: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
