@@ -1,8 +1,0 @@
-appConfig:
-  spring:
-    profiles:
-      active: "participant"
-    data:
-      redis: 
-        port: "6379"
-        username: "default"

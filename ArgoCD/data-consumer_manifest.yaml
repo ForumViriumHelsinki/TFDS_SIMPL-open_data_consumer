@@ -1,43 +1,44 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: 'consumer-deployer'           # name of the deploying app in argocd
-  namespace: argocd                     # namespace of your argocd
+  name: consumer-deployer
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/ForumViriumHelsinki/TFDS_SIMPL-open_data_consumer.git'
-    path: charts
-    targetRevision: main                  # version of package
+    repoURL: https://code.europa.eu/api/v4/projects/903/packages/helm/stable
+    path: '""'
+    targetRevision: 3.0.0-F-feature-splits.882.bfd7a890
     helm:
+      parameters:
+        - name: consumer_iaa.extraValues.tier1_gateway.targetRevision
+          value: 2.7.0
       values: |
-        values:
-          branch: main                    # branch of repo with values - for released version it should be the release branch
         project: default
         namespaceTag: 
-          consumer: consumer              # identifier of deployment and part of fqdn for this agent
-          authority: authority           # Creates URLs pointing to the central trust: https://tls.authority.authority.ds...
-          common: common                  # identifier of deployment and part of fqdn for common components
-        domainSuffix: org-x.helsinki.tfds.io           # last part of fqdn
-        authorityDomainSuffix: ds.helsinki.tfds.io    # last part of fqdn for the governance authority cluster
-        resourcePreset: low             # set to "low" to disable requests of resources
+          authority: authority
+          consumer: consumer
+          common: common
+        domainSuffix: org-x.helsinki.tfds.io
+        authorityDomainSuffix: ds.helsinki.tfds.io
         argocd:
-          appname: consumer               # name of generated argocd app 
-          namespace: argocd                 # namespace of your argocd
+          appname: consumer
+          namespace: argocd
         cluster:
           address: https://kubernetes.default.svc
-          namespace: consumer             # where the app will be deployed
-          commonToolsNamespace: common    # namespace where main monitoring stack is deployed
-          issuer: dev-prod                  # certificate issuer
+          namespace: consumer
+          commonToolsNamespace: common
+          issuer: dev-prod
         secrets:
-          secretEngine: example             # secret engine name created in OpenBao
-          role: example-role                # role created in OpenBao for access
+          role: example-role
+          secretEngine: example
         monitoring:
-          enabled: false                     # should monitoring be disabled
-        crossplane:
           enabled: false
-        singleNode: true
+        consumer_iaa:
+          extraValues:
+            tier2_gateway:
+              targetRevision: 2.7.0  
+        resourcePreset: low
+    chart: consumer
   destination:
-    server: 'https://kubernetes.default.svc'
-    namespace: consumer                   # where the package will be deployed
-
+    server: https://kubernetes.default.svc
+    namespace: consumer
