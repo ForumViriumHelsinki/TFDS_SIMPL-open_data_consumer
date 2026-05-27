@@ -73,7 +73,7 @@ keycloak:
 
 tier1_gateway:
   projectID: "772"
-  targetRevision: 2.8.0
+  targetRevision: 2.10.1
   chart_name: tier1-gateway
   resources:
     requests:
@@ -103,7 +103,7 @@ xfsc_advsearch_be:
 
 users_roles:
   projectID: "771"
-  targetRevision: 2.8.0
+  targetRevision: 2.10.2
   chart_name: users-roles
   resources:
     requests:
@@ -117,7 +117,7 @@ users_roles:
 
 users_roles_fe:
   projectID: "1310"
-  targetRevision: 2.8.3
+  targetRevision: 2.10.1
   chart_name: fe-users-and-roles
   resources:
     requests:
@@ -129,7 +129,7 @@ users_roles_fe:
 
 tier2_gateway:
   projectID: "860"
-  targetRevision: 2.8.0
+  targetRevision: 2.10.0
   chart_name: tier2-gateway
   resources:
     requests:
@@ -204,7 +204,7 @@ simpl_catalogue_client:
 
 auth_provider:
   projectID: "939"
-  targetRevision: 2.8.0
+  targetRevision: 2.10.1
   chart_name: authentication-provider
   resources:
     requests:
@@ -218,7 +218,7 @@ auth_provider:
 
 auth_provider_fe:
   projectID: "1308"
-  targetRevision: 2.8.3
+  targetRevision: 2.9.2
   chart_name: fe-authentication-provider
   resources:
     requests:
