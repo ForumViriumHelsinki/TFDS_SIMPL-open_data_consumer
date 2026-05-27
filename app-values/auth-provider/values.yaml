@@ -1,10 +1,4 @@
 appConfig:
-  microservice:
-    identity-provider:
-      url: "https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
-  open-id-connect:
-    certs-endpoint: "https://authority.be.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}/auth/realms/authority/protocol/openid-connect/certs"
-
   spring:
     profiles:
       active: "participant"
