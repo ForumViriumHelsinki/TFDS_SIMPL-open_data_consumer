@@ -463,6 +463,8 @@ spec:
           microservice:
             identity-provider:
               url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+          openid-connect:
+            certsEndpoint: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth/realms/participant/protocol/openid-connect/certs"
           client:
             authority:
               url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix | default .Values.domainSuffix }}"
