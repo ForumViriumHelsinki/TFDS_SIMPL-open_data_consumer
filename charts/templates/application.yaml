@@ -179,6 +179,12 @@ spec:
             data:
               redis:
                 host: "redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local"
+            datasource:
+              url: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_authenticationprovider"
+              username: {{ .Values.namespaceTag.consumer }}_authenticationprovider
+              {{- with .Values.backendExtraGlobalDatasource }}
+              {{ . | nindent 14 }}
+              {{- end }}
           microservice:
             identity-provider:
               url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
