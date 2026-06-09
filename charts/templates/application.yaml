@@ -41,6 +41,8 @@ spec:
         defaultInitContainers:
           prepareWriteDirs:
             enabled: false
+        command:
+          - /opt/keycloak/bin/kc.sh
         args:
           - start
           - --import-realm
