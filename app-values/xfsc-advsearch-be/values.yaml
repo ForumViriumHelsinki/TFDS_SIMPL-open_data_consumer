@@ -1,58 +1,60 @@
-image:
-  repository: "code.europa.eu:4567/simpl/simpl-open/development/data1/xfsc-advsearch-be"
+#Domain associated with Cluster
+domain: integrated.simpl-europe.eu
 
-#Service port of component SD-Tooling-Api-Validation
-xsfcAdvsearchServicePort: 8080
+# ID of persistentVolumeClaims associated with NFS Storage
+schemaVolumeClaim: nfs-storage-pvc
 
-#Container port of component SD-Tooling-Api-Validation
-xsfcAdvsearchContainerPort: 8080
-
-
-#specify 'dev' for dev environment or 'dev-int' for integration environment
-vaultEnvIdentifier: dev-int
-
-#Domain associated with Dev Cluster (don't modify it)
-domain: int.simpl-europe.eu
-
-#ID of persistentVolumeClaims associated with NFS Storage
-schemaVolumeClaim: nfs-storage-pvc-sd
-#Mount path used for schema storage
-schemaPvcMountPath: /data
-
+# enable ingress only for development purpose
+# on production environment this service must be exposted through the participant tier1 gateway only
 ingress:
   enabled: false
 
-# authentication provider
-authenticationProvider:
-  service: 
-    url: http://authentication-provider:8080
+log4j:
+  level:
+    # logging level for all logs excluding the specific ones
+    root: INFO
+    # logging level for application components only
+    app: DEBUG
+    # logging level for feign clients only
+    feign: DEBUG  
 
-# federated catalog application (fc-service)
-federatedCatalogue:
-  tier2Gateway:
-    # URI to the tier2 tls gateway of the federated catalog application
-    # tier2 tls gateway path configured as route rule to the federated catalog application
-    pathPrefix: /fc
-
-# catalog adapter application (catalogue-adapter-service)
-catalogueAdapter:
-  tier2Gateway:
-    # tier2 tls gateway path configured as route rule to the catalog adapter application
-    pathPrefix: /adapter
-
-# participant provider
-participant:
-  onboarding:
-    # onboarding credential certificate password
-    credentialPassword: authority
-  
 web:
   mvc:
     cors:
       # optional allowed origins for cross calls (separated by comma or * to allow all origins)
       # if empty no cross calls are allowed
-      allowedOrigins: ""  
+      allowedOrigins: ""
 
-env:
-  PUBLIC_AGENT_TYPE="consumer"
-  
+# comma separated list of servers url to be used by swagger
+openapiConfig:
+  servers: https://xsfc-advsearch-be.integrated.simpl-europe.eu,https://t1.data1-provider.integrated.simpl-europe.eu/xsfc-advsearch-be
+
+# url to the AuthenticationProvider internal service
+authenticationProvider:
+  service:
+    url: http://authentication-provider:8080
+
+# absolute path to the schema repository synced by the schema-synch-adapter
+schemaSyncService:
+  repositoryPath: /home/simpluser/data/schemas/consumer    
+
+# catalog adapter application (catalogue-adapter-service)
+catalogueAdapter:
+  tier2Gateway:
+    # url to the tier2 tls gateway of the catalog adapter application
+    url: https://tls.authority.authority01.integrated.simpl-europe.eu
+    #url: https://t2.gaiax-edc-dev-catalogue.dev.simpl-europe.eu
+    # tier2 tls gateway path configured as route rule to the catalog adapter application
+    pathPrefix: /adapter
+    #pathPrefix: /catalogue-adapter-service
+
+
+# federated catalog application
+federatedCatalogue:
+  tier2Gateway:
+    # url to the tier2 tls gateway of the catalog adapter application
+    url: https://tls.authority.authority01.integrated.simpl-europe.eu
+    #url: https://t2.gaiax-edc-dev-catalogue.dev.simpl-europe.eu
+    # tier2 tls gateway path configured as route rule to the federated catalog application
+    pathPrefix: /fc
+    #pathPrefix: /fc-service

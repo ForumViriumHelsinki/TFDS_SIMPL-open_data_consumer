@@ -1,33 +1,77 @@
-# specify 'dev' for dev environment or 'int' for integration environment
-domainUrlEnvIdentifier: int
+#Domain associated with Cluster
+domain: integrated.simpl-europe.eu
 
-serviceAccount:
-   # optional service account prefix
-   prefix:
-
-openTelemetry:
-  # disables the OpenTelemetry SDK (true on local dev)   
-  disabled: false
-  # used to identify the environment
-  environment: int
-
-profile: consumerNoKafka
-
-edcConnector:
-  # the participant id to be used as assigner in policies as expected by the EDC connector on contract negotiation
-  participantId: consumer
-  baseUrl: http://simpl-edc-service:29193
-  apiKey: apikey
-
-kafka:
-  consumer:
-    groupId: contract_consumption
-  auth:
-    type: SASL_PLAINTEXT
-  fatalIfBrokerNotAvailable: false
-
-appJarPath: "/home/simpluser/app.jar"
-
+# enable ingress only for development purpose
+# do not expose this service in a production environment
 ingress:
   enabled: false
 
+profile: consumer
+
+# comma separated list of servers url to be used by swagger
+openapiConfig:
+  servers: https://edc-connector-adapter.integrated.simpl-europe.eu
+
+log4j:
+  level:
+    # logging level for all logs excluding the specific ones
+    root: INFO
+    # logging level for application components only
+    app: DEBUG
+    # logging level for feign clients only
+    feign: DEBUG
+
+web:
+  mvc:
+    cors:
+      # optional allowed origins for cross calls (list separed by comma or * to allow all origins)
+      # if empty no cross calls are allowed
+      allowedOrigins: ""
+
+    bearerToken:
+      # if true a JWT token must be present as Bearer in any request
+      required: true
+      # optional list (comma separated) of allowed paths (ant matcher expressions) to skip JWT token check (ex: actuator health paths)
+      allowedPaths: "/actuator/health/*"
+
+#########################################################################
+# 'consumer' profile only
+#########################################################################
+
+appJarPath: "/home/simpluser/app.jar"
+
+edcConnector:
+  # url to the consumer EDC connector management port (internal service)
+  baseUrl: http://simpl-edc-service:29193
+  #baseUrl: https://edc-consumer.dev.simpl-europe.eu
+  apiKey: edc-apikey-value
+  deprovisioning:
+    # use false to disable or true to enable deprovisionig requests to EDC connector
+    enabled: false
+
+kafka:
+  # urls list to KAFKA bootstrap servers (comma separed if more than one)
+  bootstrapServers: kafka.common01.svc.cluster.local:9092
+
+  # consumers group id
+  consumer:
+    groupId: contract_consumption
+  topics:
+    # topic used for checking the transfer status
+    transferStatus: contract_consumption.transfer_status
+    # topic used for transfer deprovisioning after transfer completion
+    transferDeprovisioning: contract_consumption.transfer_deprovisioning
+
+  # can be one of: SASL_PLAINTEXT (if blank no auth enabled)
+  auth:
+    type: SASL_PLAINTEXT
+
+  # flag to stop application if kafka broker is not available
+  fatalIfBrokerNotAvailable: true
+
+
+#vault:
+#  secretEngine: "{{ .Values.secrets.secretEngine }}"
+#  role: "{{ .Values.secrets.role }}"
+#  secretPath: "{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-edc-connector-adapter"
+#  service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"

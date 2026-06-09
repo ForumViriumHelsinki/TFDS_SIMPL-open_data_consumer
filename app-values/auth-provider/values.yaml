@@ -1,3 +1,18 @@
+# db:
+#   cipherSecret: "authenticationprovider-db-cipher-secret" # name of the secret key that will be generated used to encrypt keys  
+
+# keypair:
+#   signatureAlgorithm: "SHA256withECDSA"
+#   algorithm: "ECDSA"
+#   keyLength: 256
+
+# profile: "participant"
+
+# redis: 
+#   port: "6379"
+#   username: "default"
+
+
 appConfig:
   spring:
     profiles:

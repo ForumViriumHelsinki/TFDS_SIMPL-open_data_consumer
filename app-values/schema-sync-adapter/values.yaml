@@ -1,0 +1,76 @@
+#Domain associated with Cluster
+domain: integrated.simpl-europe.eu
+
+# ID of persistentVolumeClaims associated with NFS Storage
+schemaVolumeClaim: nfs-storage-pvc
+
+# enable ingress only for development purpose
+# do not expose this service in a production environment
+ingress:
+  enabled: true
+
+# comma separated list of servers url to be used by swagger
+openapiConfig:
+  servers: https://schema-synch-adapter.integrated.simpl-europe.eu
+
+log4j:
+  level:
+    # logging level for all logs excluding the specific ones
+    root: INFO
+    # logging level for application components only
+    app: DEBUG
+    # logging level for feign clients only
+    feign: DEBUG
+
+web:
+  mvc:
+    cors:
+      # optional allowed origins for cross calls (list separed by comma or * to allow all origins)
+      # if empty no cross calls are allowed
+      allowedOrigins: ""
+
+    bearerToken:
+      # if true a JWT token must be present as Bearer in any request
+      required: true
+      # optional list (comma separated) of allowed paths (ant matcher expressions) to skip JWT token check (ex: actuator health paths)
+      allowedPaths: "/actuator/health/*"
+
+
+kafka:
+  auth:
+    type: "SASL_PLAINTEXT"
+    mechanism: "PLAIN"
+    loginModuleClass: "org.apache.kafka.common.security.plain.PlainLoginModule"
+
+schemaManager:
+  #serviceUrl: "http://localhost:8080/mock/schema-manager"
+  serviceUrl: "https://schema-manager-be.authority01.integrated.simpl-europe.eu"
+
+# absolute path to the schema repository synced by the schema-synch-adapter
+schemaSyncService:
+  repositoryPath: /home/simpluser/data/schemas/consumer
+
+
+#########################################################################################
+# Auth client
+#########################################################################################
+auth:
+  serviceUrl: https://participant.be.dataprovider01.integrated.simpl-europe.eu
+  servicePath: /auth/realms/participant/protocol/openid-connect/token
+  clientId: frontend-cli
+
+  #grant-type: client_credentials
+  #clientSecret: rLE4ViJDApBUnJesFOISD7VPPGTW7wwT
+
+  grantType: password
+  username: schema.manager
+  password: password
+
+
+#########################################################################################
+# Schema manager webhook configuration
+#########################################################################################
+webhook:
+  registration:
+    # tier2 url to the schema-sync-adapter service to be used to compose the registered uri in the schema manager webhook (ending with the route context name)
+    targetUrl: https://tls.participant.consumer01.integrated.simpl-europe.eu/schema-sync-adapter

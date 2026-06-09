@@ -4,13 +4,15 @@ values:
 
 project: ${PROJECT}
 domainSuffix: ${DOMAINSUFFIX}
+authorityDomainSuffix: ${AUTHORITYDOMAINSUFFIX}
 namespaceTag:
   consumer: ${NAMESPACETAG}
   authority: ${AUTHNAMESPACETAG}
   common: ${COMMONSPACETAG}
 
-resourcePreset: default
-# resourcePreset: low
+resourcePreset: low
+
+singleNode: ${SINGLENODE}
 
 argocd:
   appname: ${NAMESPACE}
@@ -25,42 +27,33 @@ cluster:
 secrets:
   secretEngine: ${SECRETENGINE}
   role: ${SECRETROLE}
-
-redis:
-  repo_URL: 'https://charts.bitnami.com/bitnami'
-  targetRevision: 19.6.0
-  chart_name: redis
-  nameOverride: redis
-  resourcesPreset: "none"
-  resources:
-    requests:
-      cpu: "0"
-      memory: "0"
-  valueFiles:
-    - values.yaml
-
-redis_commander:
-  enabled: false
-  repo_URL: 'https://github.com/joeferner/redis-commander.git'
-  targetRevision: master
-  nameOverride: redis-commander
-  path: 'k8s/helm-chart/redis-commander'
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-  valueFiles:
-    - values.yaml
-
+#OK
 keycloak:
+  enabled: true
   repo_URL: https://charts.bitnami.com/bitnami
   chart_name: keycloak
-  targetRevision: 22.2.5
+  targetRevision: 25.2.0
+  keycloak_authenticator:
+    targetRevision: 2.7.1
+  eidas_demo_keycloak_extension:
+    targetRevision: 0.4.1
   nameOverride: keycloak
   resourcesPreset: "none"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1G"
+    limits:
+      cpu: "1"
+      memory: "2G"
+  valueFiles:
+    - values.yaml
+
+auth_provider:
+  enabled: true
+  projectID: "939"
+  targetRevision: 2.12.4
+  chart_name: authentication-provider
   resources:
     requests:
       cpu: "500m"
@@ -71,39 +64,23 @@ keycloak:
   valueFiles:
     - values.yaml
 
-tier1_gateway:
-  projectID: "772"
-  targetRevision: 2.10.1
-  chart_name: tier1-gateway
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "500Mi"
-    limits:
-      cpu: "500m"
-      memory: "500Mi"
-  valueFiles:
-    - values.yaml
-
-xfsc_advsearch_be:
+auth_provider_fe:
   enabled: true
-  projectID: "891"
-  targetRevision: 1.18.0
-  chart_name: xfsc-advsearch
+  projectID: "1308"
+  targetRevision: 2.9.2
+  chart_name: fe-authentication-provider
   resources:
     requests:
       cpu: "250m"
-      memory: "500Mi"
+      memory: "512Mi"
     limits:
-      cpu: "500m"
-      memory: "500Mi"
-  valueFiles:
-    - values.yaml
-  nameOverride: xfsc-advsearch-be
+      cpu: "250m"
+      memory: "512Mi"
 
 users_roles:
+  enabled: true
   projectID: "771"
-  targetRevision: 2.10.2
+  targetRevision: 2.12.9
   chart_name: users-roles
   resources:
     requests:
@@ -116,8 +93,9 @@ users_roles:
     - values.yaml
 
 users_roles_fe:
+  enabled: true
   projectID: "1310"
-  targetRevision: 2.10.1
+  targetRevision: 2.12.5
   chart_name: fe-users-and-roles
   resources:
     requests:
@@ -127,9 +105,38 @@ users_roles_fe:
       cpu: "250m"
       memory: "512Mi"
 
+authentication_provider_fe:
+  enabled: true
+  projectID: "1308"
+  targetRevision: 2.9.3
+  chart_name: fe-authentication-provider
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "250m"
+      memory: "512Mi"
+
+tier1_gateway:
+  enabled: true
+  projectID: "772"
+  targetRevision: 2.12.6
+  chart_name: tier1-gateway
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
 tier2_gateway:
+  enabled: true
   projectID: "860"
-  targetRevision: 2.10.0
+  targetRevision: 2.11.4
   chart_name: tier2-gateway
   resources:
     requests:
@@ -143,8 +150,9 @@ tier2_gateway:
     - values-routes.yaml
 
 tier2_proxy:
+  enabled: true
   projectID: "1112"
-  targetRevision: 1.2.1
+  targetRevision: 1.5.5
   chart_name: tier2-proxy
   resources:
     requests:
@@ -154,10 +162,40 @@ tier2_proxy:
       cpu: "500m"
       memory: "500Mi"
 
+redis:
+  enabled: true
+  repo_URL: "https://charts.bitnami.com/bitnami"
+  targetRevision: 19.6.0
+  chart_name: redis
+  nameOverride: redis
+  resourcesPreset: "none"
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+  valueFiles:
+    - values.yaml
+
+redis_commander:
+  enabled: true
+  repo_URL: "https://github.com/joeferner/redis-commander.git"
+  targetRevision: master
+  nameOverride: redis-commander
+  path: "k8s/helm-chart/redis-commander"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  valueFiles:
+    - values.yaml
+
 simpl_edc:
   enabled: true
   projectID: "920"
-  targetRevision: 1.0.21
+  targetRevision: 1.0.23
   chart_name: edc
   nameOverride: simpl-edc
   resources:
@@ -171,10 +209,34 @@ simpl_edc:
     - values.yaml
     - values-consumer.yaml
 
+simpl_catalogue_client:
+  enabled: true
+  projectID: "937"
+  targetRevision: 2.4.3
+  chart_name: catalogue-ui
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+contract_consumption_be:
+  enabled: true
+  projectID: "968"
+  targetRevision: 1.18.0
+  chart_name: contract-consumption-be
+  nameOverride: contract-consumption-be
+  valueFiles:
+    - values.yaml
+
 edc_connector_adapter:
-  enabled:  true
+  enabled: true
   projectID: "1091"
-  targetRevision: 1.10.1
+  targetRevision: 1.15.0
   chart_name: edc-connector-adapter
   nameOverride: edc-connector-adapter
   resources:
@@ -187,51 +249,91 @@ edc_connector_adapter:
   valueFiles:
     - values.yaml
 
-simpl_catalogue_client:
+schema_sync_adapter:
   enabled: true
-  projectID: "937"
+  projectID: "1324"
+  targetRevision: 1.5.0
+  chart_name: schema-sync-adapter
+  nameOverride: schema-sync-adapter
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  valueFiles:
+    - values.yaml
+
+sdtooling_validation_api_be:
+  enabled: true
+  projectID: "868"
+  targetRevision: 1.18.1
+  chart_name: sd-creation-wizard
+  nameOverride: sd-validation
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+xfsc_advsearch_be:
+  enabled: true
+  projectID: "891"
+  targetRevision: 1.20.0
+  chart_name: xfsc-advsearch
+  nameOverride: xfsc-advsearch-be
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+  valueFiles:
+    - values.yaml
+
+contract:
+  enabled: true
+  projectID: "872"
+  targetRevision: 2.9.0
+  chart_name: simpl-contract
+  resources:
+    requests:
+      memory: "250Mi"
+      cpu: "150m"
+    limits:
+      memory: "700Mi"
+      cpu: "300m"
+  ingress:
+    enabled: false
+  valueFiles:
+    - values.yaml
+  nameOverride: contract-consumer
+
+stubs:
+  enabled: true
+  projectID: "930"
   targetRevision: 2.2.0
-  chart_name: catalogue-ui
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "500Mi"
-    limits:
-      cpu: "500m"
-      memory: "500Mi"
+  chart_name: simpl-stubs
   valueFiles:
     - values.yaml
 
-auth_provider:
-  projectID: "939"
-  targetRevision: 2.10.1
-  chart_name: authentication-provider
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "500Mi"
-    limits:
-      cpu: "500m"
-      memory: "1Gi"
-  valueFiles:
-    - values.yaml
-
-auth_provider_fe:
-  projectID: "1308"
-  targetRevision: 2.9.2
-  chart_name: fe-authentication-provider
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "512Mi"
-    limits:
-      cpu: "250m"
-      memory: "512Mi"
+signingService:
+  enabled: true
+  projectID: "1413"
+  targetRevision: 0.0.2
+  chart_name: simpl-signing-service
+  nameOverride: simpl-signing-service
 
 monitoring:
-  enabled: true
+  enabled: false
   projectID: "828"
-  targetRevision: 0.3.1
+  targetRevision: 0.5.4
   chart_name: eck-monitoring
   fullnameOverride: elastic
   resources:
@@ -242,33 +344,26 @@ monitoring:
   valueFiles:
     - values.yaml
 
-contract:
-  projectID: "872"
-  targetRevision: 2.5.0
-  chart_name: simpl-contract
-  resources:
-    requests:
-      memory: "250Mi"
-      cpu: "150m"
-    limits:
-      memory: "700Mi"
-      cpu: "300m"
-  valueFiles:
-    - values.yaml
-  nameOverride: contract-consumer
+postgrest:
+  databases:
+    - name: "authenticationprovider"
+      host: "pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local"
+      port: "5432"
+      database: "{{ .Values.cluster.namespace }}_authenticationprovider"
+      user: "{{ .Values.namespaceTag.consumer }}_authenticationprovider"
+      password: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-postgres-passwords#{{ .Values.cluster.namespace }}-authenticationprovider"
+      anonRole: "{{ .Values.namespaceTag.consumer }}_authenticationprovider"
+      dbPool: 1
+    - name: usersroles
+      host: "pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local"
+      port: "5432"
+      database: "{{ .Values.cluster.namespace }}_usersroles"
+      user: "{{ .Values.namespaceTag.consumer }}_usersroles"
+      password: "vault:{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-postgres-passwords#{{ .Values.cluster.namespace }}-usersroles"
+      anonRole: "{{ .Values.namespaceTag.consumer }}_usersroles"
+      dbPool: 1
+development:
+  enableTestConfigurations: false
 
-stubs:
-  projectID: "930"
-  targetRevision: 2.0.2
-  chart_name: simpl-stubs
-  valueFiles:
-    - values.yaml
-
-contract_consumption_be:
-  enabled: true
-  projectID: "968"
-  targetRevision: 1.15.0
-  chart_name: contract-consumption-be
-  nameOverride: contract-consumption-be
-  valueFiles:
-    - values.yaml
+eidas:
+  enabled: false

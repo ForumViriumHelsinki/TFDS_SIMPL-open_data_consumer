@@ -13,6 +13,12 @@ appConfig:
           - Path=/edc-connector-adapter/**
         filters:
           - StripPrefix=1
+      - id: schema-sync-adapter
+        uri: http://schema-sync-adapter:8080
+        predicates:
+          - Path=/schema-sync-adapter/**
+        filters:
+          - StripPrefix=1
 
     public-urls:
       - method: GET
@@ -37,4 +43,7 @@ appConfig:
         disable-ephemeral-proof-check: true
       - method: GET
         path: "/edc-connector-adapter/**"
+        disable-ephemeral-proof-check: true
+      - method: POST
+        path: "/schema-sync-adapter/**"
         disable-ephemeral-proof-check: true

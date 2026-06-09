@@ -1,0 +1,20 @@
+#Domain associated with Cluster
+domain: integrated.simpl-europe.eu
+
+# enable ingress only for development purpose
+# do not expose this service in a production environment
+ingress:
+  enabled: false
+
+log4j:
+  level:
+    # logging level for all logs excluding the specific ones
+    root: INFO
+    # logging level for application components only
+    app: DEBUG
+    # logging level for feign clients only
+    feign: DEBUG
+
+# comma separated list of servers url to be used by swagger
+openapiConfig:
+  servers: https://t1.data1-provider.integrated.simpl-europe.eu/sd-validation

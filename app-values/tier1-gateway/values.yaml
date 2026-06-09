@@ -3,40 +3,6 @@ profile: participant
 # Spring Cloud Gateway Routes Participant
 appConfig:
   external-routes:
-    spring-route-definitions:
-      - id: contract-consumption-be
-        uri: http://contract-consumption-be:8080
-        predicates:
-          - Path=/contract-consumption/**
-        filters:
-          - StripPrefix=1
-      - id: sdtooling-wizard-be
-        uri: http://sd-creation-wizard-api:8080
-        predicates:
-          - Path=/sdtooling-api/**
-        filters:
-          - StripPrefix=1    
-      - id: xfsc-advsearch-be
-        uri: http://xfsc-advsearch-be:8080
-        predicates:
-          - Path=/xfsc-advsearch-be/**
-        filters:
-          - StripPrefix=1
-      - id: edc-connector
-        uri: http://edc-connector-adapter:8080
-        predicates:
-          - Path=/edc-connector-adapter/**
-        filters:
-          - StripPrefix=1
-      - id: edc-management
-        uri: http://simpl-edc-service:29193
-        predicates:
-          - Path=/edc/**
-        filters:
-          - StripPrefix=1
-    public-urls:
-      - method: "GET"
-        path: "/actuator/health/**"
     rbac:
       - path: "/edc-connector-adapter/api/*/registration/register"
         method: GET
@@ -46,7 +12,18 @@ appConfig:
         method: POST
         roles:
           - SD_PUBLISHER
-
+    logging:
+      business:
+      - config:
+          operations:
+          - ADVANCED_SEARCH
+        method: POST
+        path: /xfsc-advsearch-be/v1/selfDescriptions/advanced
+      - config:
+          operations:
+          - QUICK_SEARCH
+        method: GET
+        path: /xfsc-advsearch-be/v1/selfDescriptions
   springdoc:
     swagger-ui:
       urls:

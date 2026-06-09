@@ -1,33 +1,38 @@
-# service port of component
-servicePort: 8080
+#Domain associated with Cluster
+domain: integrated.simpl-europe.eu
 
-# container port of component
-containerPort: 8080
+# enable ingress only for development purpose
+# on production environment this service must be exposted through the participant tier1 gateway only
+ingress:
+  enabled: false
 
-# resources configuration
-resources:
-  requests:
-    cpu: "1000m"
-    memory: "2Gi"
-  limits:
-    cpu: "1000m"
-    memory: "2Gi"
+log4j:
+  level:
+    # logging level for all logs excluding the specific ones
+    root: INFO
+    # logging level for application components only
+    app: DEBUG
+    # logging level for feign clients only
+    feign: DEBUG
 
-serviceAccount:
-  prefix: ""
-  name: contract-consumption-service-account
-  
-openTelemetry:
-  # disables the OpenTelemetry SDK (true on local dev)   
-  disabled: true
-  # used to identify the environment
-  environment: int
-  otlpExporter:
-    # protocol used by the OTLP exporter (http/protobuf or grpc)
-    protocol: http/protobuf
-  # context propagation type
-  propagators: tracecontext
+web:
+  mvc:
+    cors:
+      # optional allowed origins for cross calls (list separed by comma or * to allow all origins)
+      # if empty no cross calls are allowed
+      allowedOrigins: ""
 
+    bearerToken:
+      # if true a JWT token must be present as Bearer in any request
+      required: true
+      # optional list (comma separated) of allowed paths (ant matcher expressions) to skip JWT token check (ex: actuator health paths)
+      allowedPaths: "/actuator/health/*,/status"
+
+# comma separated list of servers url to be used by swagger
+openapiConfig:
+  servers: https://contract-consumption-be.integrated.simpl-europe.eu
+
+# url to the connector adapter internal service
 connectorAdapter:
   service:
     url: http://edc-connector-adapter:8080
@@ -35,9 +40,9 @@ connectorAdapter:
 # configuration for connectivity between Contract-Consumption-Be and Validation
 validation:
   config:
-    enabled: false
-    domain: "http://sd-validation:8080"
-
-ingress:
-  enabled: false
-      
+    enabled: true
+     # domain is the URL of SDTooling-Api-Validation service
+    # (sdtool-validation is name of Kube service associated. Check it!)
+    domain:  http://sd-validation:8080
+    # name of Validation API Method
+    validationResourceAddressApiV1: "/v1/resourceAddress/validate"

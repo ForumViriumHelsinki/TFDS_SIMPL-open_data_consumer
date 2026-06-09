@@ -19,3 +19,8 @@ databaseSeeding:
     # if enabled=true and filePath is commented or empty the table will be initialized with the default seeding file.
     # You can find the default seeding file roleAttributes.default.json in samples/db-seeding/user-roles/0.8.x/
     filePath: #file:/app/config/roleAttributes.json 
+
+appConfig:
+  spring:
+    liquibase:
+      contexts: test
