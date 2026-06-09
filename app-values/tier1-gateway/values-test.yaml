@@ -4,55 +4,39 @@ appConfig:
     - id: postgrest-authenticationprovider
       uri: http://postgrest-authenticationprovider.{{ .Release.Namespace }}.svc.cluster.local:3000
       predicates:
-      - Path: /postgrest/authenticationprovider/**
+      - Path=/postgrest/authenticationprovider/**
       filters:
-      - StripPrefix: 2
+      - StripPrefix=2
     - id: postgrest-usersroles
       uri: http://postgrest-usersroles.{{ .Release.Namespace }}.svc.cluster.local:3000
       predicates:
-      - Path: /postgrest/usersroles/**
+      - Path=/postgrest/usersroles/**
       filters:
-      - StripPrefix: 2
+      - StripPrefix=2
     - id: users-roles-test-cli
       uri: ${users-roles.url}
       predicates:
-      - Path: '/cli/userApi/v1/users,
-
-          /cli/userApi/v1/users/*,
-
-          /cli/userApi/v1/roles,
-
-          /cli/userApi/v1/roles/*,
-
-          '
+      - Path=/cli/userApi/v1/users,/cli/userApi/v1/users/*,/cli/userApi/v1/roles,/cli/userApi/v1/roles/*
       filters:
-      - StripPrefix: 2
+      - StripPrefix=2
       - name: ClientCredentialsFilterFactory
         args:
           cli: cli-role
     - id: cleanup-users-with-CLI-v2
       uri: ${users-roles.url}
       predicates:
-      - Path: '/cli/userApi/tier1/v2/users,
-
-          /cli/userApi/tier1/v2/users/*,
-
-          /cli/userApi/tier1/v2/roles,
-
-          /cli/userApi/tier1/v2/roles/*,
-
-          '
+      - Path=/cli/userApi/tier1/v2/users,/cli/userApi/tier1/v2/users/*,/cli/userApi/tier1/v2/roles,/cli/userApi/tier1/v2/roles/*
       filters:
-      - StripPrefix: 2
+      - StripPrefix=2
       - name: ClientCredentialsFilterFactory
         args:
           cli: cli-role
     - id: authenticationprovider-internal
       uri: ${authentication-provider.url}
       predicates:
-      - Path: /internal/authApi/**
+      - Path=/internal/authApi/**
       filters:
-      - StripPrefix: 2
+      - StripPrefix=2
     public-urls:
     - path: /postgrest/**
     - path: /internal/**
