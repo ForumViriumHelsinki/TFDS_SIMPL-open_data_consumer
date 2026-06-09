@@ -166,32 +166,11 @@ spec:
           vault.security.banzaicloud.io/vault-path: kubernetes
           vault.security.banzaicloud.io/vault-skip-verify: "true"
         appConfig:
-          management:
-            otlp:
-              tracing:
-                endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
           spring:
             datasource:
-              url: "jdbc:postgresql://pg-cluster.{{ .Values.cluster.commonToolsNamespace }}.svc.cluster.local:5432/{{ .Values.cluster.namespace }}_authenticationprovider"
-              username: {{ .Values.namespaceTag.consumer }}_authenticationprovider
               {{- with .Values.backendExtraGlobalDatasource }}
               {{ . | nindent 14 }}
               {{- end }}
-            data:
-              redis:
-                host: "redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local"
-          microservice:
-            identity-provider:
-              url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
-          client:
-            authority:
-              url: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix }}"
-          simpl:
-            certificate:
-              san: "tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
-          openid-connect:
-            certsEndpoint: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/auth/realms/participant/protocol/openid-connect/certs"
-
         env:
         - name: LOGGING_LEVEL_EU_EUROPA_EC_SIMPL
           value: "DEBUG"
@@ -269,11 +248,6 @@ spec:
               {{- with .Values.backendExtraGlobalDatasource }}
               {{ . | nindent 14 }}
               {{- end }}
-          notification:
-            role-requests:
-              my-profile-url: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/users-roles/my-profile
-              role-request-review-page: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/users-roles/role-requests-management/review/{roleRequestId}
-
         env:
         - name: LOGGING_LEVEL_EU_EUROPA_EC_SIMPL
           value: "DEBUG"
@@ -413,104 +387,6 @@ spec:
           value: "DEBUG"
         - name: SPRING_JPA_SHOW_SQL
           value: "false"
-        appConfig:
-          external-routes:
-            spring-route-definitions:
-              - id: contract-consumption-be
-                uri: http://contract-consumption-be:8080
-                predicates:
-                  - Path=/contract-consumption/**
-                filters:
-                  - StripPrefix=1
-              - id: sdtooling-wizard-be
-                uri: http://sd-creation-wizard-api:8080
-                predicates:
-                  - Path=/sdtooling-api/**
-                filters:
-                  - StripPrefix=1
-              - id: xfsc-advsearch-be
-                uri: http://xfsc-advsearch-be:8080
-                predicates:
-                  - Path=/xfsc-advsearch-be/**
-                filters:
-                  - StripPrefix=1
-              - id: edc-connector
-                uri: http://edc-connector-adapter:8080
-                predicates:
-                  - Path=/edc-connector-adapter/**
-                filters:
-                  - StripPrefix=1
-              - id: edc-management
-                uri: http://simpl-edc-service:29193
-                predicates:
-                  - Path=/edc/**
-                filters:
-                  - StripPrefix=1
-              {{- if .Values.development.enableTestConfigurations }}
-              # PostgREST routes enabled for testing / cleanup
-              # Please remember to remove this configuration (PostgREST) in production environment, these are for pipelines test only.
-              - id: postgrest-authenticationprovider
-                uri: "http://postgrest-authenticationprovider.{{ .Release.Namespace }}.svc.cluster.local:3000"
-                predicates:
-                  - Path=/postgrest/authenticationprovider/**
-                filters:
-                  - StripPrefix=2
-              - id: postgrest-usersroles
-                uri: "http://postgrest-usersroles.{{ .Release.Namespace }}.svc.cluster.local:3000"
-                predicates:
-                  - Path=/postgrest/usersroles/**
-                filters:
-                  - StripPrefix=2
-              # CLI routes enabled for testing / cleanup
-              - id: users-roles-test-cli
-                uri: ${users-roles.url}
-                predicates:
-                  - Path=
-                    /cli/userApi/v1/users,
-                    /cli/userApi/v1/users/*,
-                    /cli/userApi/v1/roles,
-                    /cli/userApi/v1/roles/*,
-                filters:
-                  - StripPrefix=2
-                  - name: ClientCredentialsFilterFactory
-                    args:
-                      cli: cli-role
-              - id: cleanup-users-with-CLI-v2
-                uri: ${users-roles.url}
-                predicates:
-                  - Path=
-                    /cli/userApi/tier1/v2/users,
-                    /cli/userApi/tier1/v2/users/*,
-                    /cli/userApi/tier1/v2/roles,
-                    /cli/userApi/tier1/v2/roles/*,
-                filters:
-                  - StripPrefix=2
-                  - name: ClientCredentialsFilterFactory
-                    args:
-                      cli: cli-role
-              # Test routes for microservices exposing internal APIs
-              # Please remember to remove this configuration (Internal) in production environment, these are for pipelines test only.
-              - id: authenticationprovider-internal
-                uri: ${authentication-provider.url}
-                predicates:
-                  - Path=/internal/authApi/**
-                filters:
-                  - StripPrefix=2
-              {{- end }}
-            public-urls:
-              - method: "GET"
-                path: "/actuator/health/**"
-              {{- if .Values.development.enableTestConfigurations }}
-              # PostgREST routes enabled for testing / cleanup
-              # Please remember to remove this configuration (PostgREST) in production environment, these are for pipelines test only.
-              - path: "/postgrest/**"
-              # Test routes for microservices exposing internal APIs
-              # Please remember to remove this configuration (Internal) in production environment, these are for pipelines test only.
-              - path: "/internal/**"
-              {{- end }}
-          jwt-configuration:
-            primary:
-              realm: participant
         {{- if eq .Values.resourcePreset "low" }}
         resources:
           requests:

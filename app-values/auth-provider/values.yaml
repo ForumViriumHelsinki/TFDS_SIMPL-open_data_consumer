@@ -1,23 +1,26 @@
-# db:
-#   cipherSecret: "authenticationprovider-db-cipher-secret" # name of the secret key that will be generated used to encrypt keys  
-
-# keypair:
-#   signatureAlgorithm: "SHA256withECDSA"
-#   algorithm: "ECDSA"
-#   keyLength: 256
-
-# profile: "participant"
-
-# redis: 
-#   port: "6379"
-#   username: "default"
-
-
 appConfig:
   spring:
     profiles:
-      active: "participant"
+      active: participant
     data:
-      redis: 
-        port: "6379"
-        username: "default"
+      redis:
+        host: redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local
+  management:
+    otlp:
+      tracing:
+        endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix
+          }}
+  microservice:
+    identity-provider:
+      url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
+  client:
+    authority:
+      url: https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix
+        }}
+  simpl:
+    certificate:
+      san: tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix
+        }}
+  openid-connect:
+    certsEndpoint: https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix
+      }}/auth/realms/participant/protocol/openid-connect/certs
