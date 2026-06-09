@@ -738,7 +738,7 @@ spec:
         hashicorp:
           role: {{ .Values.secrets.role }}
           service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
-        secretEngine: {{ .Values.secrets.secretEngine }}
+        secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
         secretConfigPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-simpl-edc"
         {{- if eq .Values.resourcePreset "low" }}
         resources:
@@ -781,8 +781,8 @@ spec:
           otlpExporter:
             endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}
         vault:
-          secretEngine: "{{ .Values.secrets.secretEngine }}"
-          secretPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-contract-consumption-be"
+          secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
+          secretPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-contract-consumption-be"
           role: "{{ .Values.secrets.role }}"
           service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
         kafka:
@@ -819,8 +819,8 @@ spec:
           topics:
             transferProcess: contract_consumption.transfer-{{ .Values.cluster.namespace }}
         vault:
-          secretEngine: "{{ .Values.secrets.secretEngine }}"
-          secretPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-edc-connector-adapter"
+          secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
+          secretPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-edc-connector-adapter"
           role: "{{ .Values.secrets.role }}"
           service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
 
@@ -885,8 +885,8 @@ spec:
           registration:
             targetUrl: https://tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/schema-sync-adapter
         vault:
-          secretEngine: "{{ .Values.secrets.secretEngine }}"
-          secretPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-schema-sync-adapter"
+          secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
+          secretPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-schema-sync-adapter"
           role: "{{ .Values.secrets.role }}"
           service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
         cluster:
@@ -990,9 +990,9 @@ spec:
           vault:
             hashicorp:
               service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
-              secretEngine: {{ .Values.secrets.secretEngine }}
+              secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
               role: {{ .Values.secrets.role }}
-              secretConfigPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-contract"
+              secretConfigPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-contract"
         ingress:
           enabled: {{ .Values.contract.ingress.enabled }}
           annotations:
@@ -1058,8 +1058,8 @@ spec:
             hashicorp:
               role: {{ .Values.secrets.role }}
               service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
-              secretEngine: {{ .Values.secrets.secretEngine }}
-              secretConfigPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-signing-service"
+              secretEngine: "/v1/{{ .Values.secrets.secretEngine }}/data"
+              secretConfigPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-signing-service"
         {{- if eq .Values.resourcePreset "low" }}
         resources:
           requests:
