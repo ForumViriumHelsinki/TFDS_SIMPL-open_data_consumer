@@ -2,25 +2,3 @@ appConfig:
   spring:
     profiles:
       active: participant
-    data:
-      redis:
-        host: redis-master.{{ .Values.cluster.namespace }}.svc.cluster.local
-  management:
-    otlp:
-      tracing:
-        endpoint: http://collector.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix
-          }}
-  microservice:
-    identity-provider:
-      url: http://identity-provider.{{ .Values.cluster.namespace }}.svc.cluster.local:8080
-  client:
-    authority:
-      url: https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix
-        }}
-  simpl:
-    certificate:
-      san: tls.participant.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix
-        }}
-  openid-connect:
-    certsEndpoint: https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix
-      }}/auth/realms/participant/protocol/openid-connect/certs

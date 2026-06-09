@@ -17,9 +17,3 @@ appConfig:
   spring:
     liquibase:
       contexts: test
-  notification:
-    role-requests:
-      my-profile-url: https://participant.fe.{{ .Values.namespaceTag.consumer }}.{{
-        .Values.domainSuffix }}/users-roles/my-profile
-      role-request-review-page: https://participant.fe.{{ .Values.namespaceTag.consumer
-        }}.{{ .Values.domainSuffix }}/users-roles/role-requests-management/review/{roleRequestId}
