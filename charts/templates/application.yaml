@@ -644,7 +644,7 @@ spec:
           role: {{ .Values.secrets.role }}
           service: "https://secrets.{{ .Values.namespaceTag.common }}.{{ .Values.domainSuffix }}"
         secretEngine: "{{ .Values.secrets.secretEngine }}"
-        secretConfigPath: "{{ .Values.secrets.secretEngine }}/{{ .Values.cluster.namespace }}-simpl-edc"
+        secretConfigPath: "/v1/{{ .Values.secrets.secretEngine }}/data/{{ .Values.cluster.namespace }}-simpl-edc"
         {{- if eq .Values.resourcePreset "low" }}
         resources:
           requests:
