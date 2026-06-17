@@ -582,10 +582,9 @@ spec:
         {{- end }}
   {{- end }}
   {{- if .Values.simpl_catalogue_client.enabled }}
-  - repoURL: "https://code.europa.eu/api/v4/projects/{{ .Values.simpl_catalogue_client.projectID }}/packages/helm/stable"
-    path: ''
+  - repoURL: {{ .Values.simpl_catalogue_client.repo_URL }}
+    path: {{ .Values.simpl_catalogue_client.path }}
     targetRevision: {{ .Values.simpl_catalogue_client.targetRevision }}
-    chart: {{ .Values.simpl_catalogue_client.chart_name }}
     helm:
       valueFiles:
         {{- range .Values.simpl_catalogue_client.valueFiles }}
