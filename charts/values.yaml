@@ -213,7 +213,7 @@ simpl_catalogue_client:
   enabled: true
   repo_URL: "https://github.com/ForumViriumHelsinki/TFDS-SIMPL-open-helm-charts.git"
   path: "charts/catalogue-ui"
-  targetRevision: fix/catalogue-ui-image-patch
+  targetRevision: main
   resources:
     requests:
       cpu: "250m"

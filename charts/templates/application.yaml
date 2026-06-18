@@ -592,6 +592,7 @@ spec:
         {{- end }}
       values: |
         env:
+          PUBLIC_ALLOWED_DOMAINS: "**.{{ .Values.domainSuffix }}"
           PUBLIC_AUTH_KEYCLOAK_SERVER_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}"
           PUBLIC_FC_DATA_URL: "https://tls.authority.{{ .Values.namespaceTag.authority }}.{{ .Values.authorityDomainSuffix }}/fc"
           PUBLIC_SEARCH_API_URL: "https://participant.be.{{ .Values.namespaceTag.consumer }}.{{ .Values.domainSuffix }}/xfsc-advsearch-be"
